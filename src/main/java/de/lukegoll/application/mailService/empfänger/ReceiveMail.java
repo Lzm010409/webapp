@@ -1,0 +1,150 @@
+package de.lukegoll.application.mailService.empfänger;
+
+
+import com.sun.mail.imap.IMAPStore;
+import de.lukegoll.application.mailService.Anhänge;
+import de.lukegoll.application.mailService.Mail;
+import de.lukegoll.application.mailService.ServerData;
+import de.lukegoll.application.textextractor.AuftragDataExtractor;
+import jakarta.mail.*;
+import org.jboss.logging.Logger;
+
+import java.io.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Properties;
+
+
+public class ReceiveMail {
+
+    protected Store imapStore;
+    private final Logger logger = Logger.getLogger(ReceiveMail.class);
+
+
+    public void login(String username, String password) throws MessagingException {
+        try {
+            Properties properties = new Properties();
+            properties.put("mail.store.protocol", "imaps");
+            properties.put("mail.imaps.port", ServerData.IMAPPORT.getData());
+            properties.put("mail.imap.starttls.enable", "true");
+            Session mailSession = Session.getDefaultInstance(properties);
+            Store store = mailSession.getStore("imaps");
+            store.connect(ServerData.IMAPHOST.getData(), username, password);
+            this.imapStore = store;
+
+        } catch (Exception e) {
+            logger.log(Logger.Level.WARN, "Es ist folgender Fehler beim einloggen in Ihren Mail Account passiert:"
+                    + e.getMessage());
+
+        }
+
+    }
+
+    public boolean checkNewMessages() throws MessagingException, IOException {
+        if (imapStore == null) {
+            throw new IllegalStateException("Zuerst einloggen!");
+        }
+
+        Folder mailFolder = imapStore.getFolder("INBOX");
+        mailFolder.open(Folder.READ_ONLY);
+
+        System.out.println("Es sind " + mailFolder.getUnreadMessageCount() + " ungelesen");
+
+        if (mailFolder.getUnreadMessageCount() != 0) {
+            return true;
+        } else {
+            return false;
+        }
+
+    }
+
+    public List<Mail> downloadNewMails() throws MessagingException {
+        if (imapStore == null) {
+            throw new IllegalStateException("Zuerst einloggen!");
+        }
+        List<Mail> mails = new LinkedList<>();
+        try {
+
+            Folder mailFolder = imapStore.getFolder("INBOX");
+            mailFolder.open(Folder.READ_ONLY);
+            Message[] messages = mailFolder.getMessages();
+            for (int i = 0; i < messages.length; i++) {
+                Message message = messages[i];
+                Mail mail = new Mail();
+                Address[] toAddress =
+                        message.getRecipients(Message.RecipientType.TO);
+                System.out.println("---------------------------------");
+                System.out.println("Details of Email Message "
+                        + (i + 1) + " :");
+                System.out.println("Subject: " + message.getSubject());
+                mail.setBetreff(message.getSubject());
+                System.out.println("From: " + message.getFrom()[0]);
+                mail.setSender(message.getFrom()[0].toString());
+                //Iterate recipients
+                System.out.println("To: ");
+                List<String> empfänger = new LinkedList<>();
+                for (int j = 0; j < toAddress.length; j++) {
+                    System.out.println(toAddress[j].toString());
+                    empfänger.add(toAddress[j].toString());
+                }
+                mail.setEmpfänger(empfänger);
+
+
+                //Iterate multiparts
+                Multipart multipart = (Multipart) message.getContent();
+                List<Anhänge> anhängeList = new LinkedList<>();
+                for (int k = 0; k < multipart.getCount(); k++) {
+
+
+                    BodyPart bodyPart = multipart.getBodyPart(k);
+                    int number = (int) (Math.random() * 100);
+                    String filePath = String.format("/Users/lukegollenstede/Desktop/TEST/Files/%s-%d.%s", bodyPart.getFileName(), number,"pdf");
+                    if (bodyPart.getFileName() == null) {
+                        continue;
+                    }
+                    InputStream stream =
+                            (InputStream) bodyPart.getInputStream();
+                    byte[] bytes = stream.readAllBytes();
+                    File targetFile = new File(filePath);
+                    OutputStream outputStream = new FileOutputStream(targetFile);
+                    outputStream.write(bytes);
+                    Anhänge anhänge = new Anhänge();
+                    anhänge.setFile(targetFile);
+                    anhänge.setTitle(bodyPart.getFileName());
+                    anhängeList.add(anhänge);
+                    System.out.println(bodyPart.getFileName());
+                }
+                mail.setFiles(anhängeList);
+                mails.add(mail);
+            }
+
+
+            mailFolder.close(false);
+            imapStore.close();
+        } catch (
+                NoSuchProviderException e) {
+            e.printStackTrace();
+        } catch (
+                MessagingException e) {
+            e.printStackTrace();
+        } catch (
+                Exception e) {
+            e.printStackTrace();
+        }
+
+        return mails;
+    }
+
+
+    public Store getImapStore() {
+        return imapStore;
+    }
+
+    public void setImapStore(IMAPStore imapStore) {
+        this.imapStore = imapStore;
+    }
+
+    public Logger getLogger() {
+        return logger;
+    }
+}
