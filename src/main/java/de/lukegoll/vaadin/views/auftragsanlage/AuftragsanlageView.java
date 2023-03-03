@@ -1,15 +1,23 @@
 package de.lukegoll.vaadin.views.auftragsanlage;
 
 import com.vaadin.collaborationengine.CollaborationAvatarGroup;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import de.lukegoll.application.AuftragsAnlageService;
 import de.lukegoll.application.data.entity.Auftrag;
+import de.lukegoll.application.mailService.Mail;
+import de.lukegoll.application.mailService.empfänger.ReceiveMailService;
 import de.lukegoll.vaadin.views.MainLayout;
+import jakarta.mail.MessagingException;
+import org.springframework.util.concurrent.ListenableFuture;
 
 import java.util.List;
 
@@ -21,14 +29,20 @@ public class AuftragsanlageView extends VerticalLayout {
     Button stopButton = new Button("Stop");
     boolean runCondition = false;
 
+    ProgressBar progressBar = new ProgressBar();
     AuftragsAnlageService auftragsAnlageService = new AuftragsAnlageService();
+    ReceiveMailService receiveMailService = new ReceiveMailService();
 
     public AuftragsanlageView() {
+        progressBar.setWidth("15em");
+        progressBar.setIndeterminate(true);
+        progressBar.setVisible(false);
         configureLoggerScreen();
         configureStartButton();
         configureStopButton();
-        add(loggerScreen, startButton, stopButton);
+        add(loggerScreen, progressBar, startButton, stopButton);
     }
+
 
     private void configureLoggerScreen() {
         loggerScreen.setHeightFull();
@@ -41,22 +55,44 @@ public class AuftragsanlageView extends VerticalLayout {
     private void configureStartButton() {
         startButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY,
                 ButtonVariant.LUMO_SUCCESS);
-        startButton.addClickListener(buttonClickEvent -> startAuftragsService(true));
+        startButton.addClickListener(buttonClickEvent -> {
+            try {
+                UI ui = buttonClickEvent.getSource().getUI().orElseThrow();
+                receiveMailService.login("", "");
+                progressBar.setVisible(true);
+                ListenableFuture<List<Mail>> future = receiveMailService.downloadNewMails();
+                future.addCallback(
+                        successResult -> updateUi(ui, "Task finished. Anzahl der heruntergeladenen Mails:" + successResult.size()),
+                        failureResult -> updateUi(ui, "Task failed" + failureResult.getMessage())
+                );
+                stopButton.addClickListener(e -> future.cancel(true));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private void updateUi(UI ui, String result) {
+        ui.access(() -> {
+            Notification.show(result);
+            progressBar.setVisible(false);
+        });
     }
 
     private void configureStopButton() {
 
         stopButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY,
                 ButtonVariant.LUMO_ERROR);
-        startButton.addClickListener(buttonClickEvent -> setRunCondition(false));
     }
 
-    private void startAuftragsService(boolean start) {
+  /*  private void startAuftragsService(boolean start) throws InterruptedException {
+
         runCondition = start;
         while (runCondition = true) {
-            List<Auftrag> auftragList = this.auftragsAnlageService.startAuftragsService();
+            List<Auftrag> auftragList = this.auftragsAnlageService.startAuftragsService(receiveMailService);
+            Thread.sleep(10000);
         }
-    }
+    }*/
 
     public TextArea getLoggerScreen() {
         return loggerScreen;

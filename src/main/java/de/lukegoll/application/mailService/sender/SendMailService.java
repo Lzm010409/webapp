@@ -14,8 +14,8 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.Properties;
 
-public class SendMail {
-    private final Logger logger = Logger.getLogger(SendMail.class);
+public class SendMailService {
+    private final Logger logger = Logger.getLogger(SendMailService.class);
     private Session mailSession;
 
     public void login(String username, String password) {

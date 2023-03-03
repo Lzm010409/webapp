@@ -2,9 +2,12 @@ package de.lukegoll.application;
 
 import de.lukegoll.application.data.entity.Auftrag;
 import de.lukegoll.application.mailService.Mail;
-import de.lukegoll.application.mailService.empfänger.ReceiveMail;
+import de.lukegoll.application.mailService.empfänger.ReceiveMailService;
 import de.lukegoll.application.textextractor.AuftragDataExtractor;
 import jakarta.mail.MessagingException;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.AsyncResult;
+import org.springframework.util.concurrent.ListenableFuture;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -13,28 +16,20 @@ import java.util.List;
 public class AuftragsAnlageService {
     boolean runCondition;
 
-    public List<Auftrag> startAuftragsService() {
-
-        ReceiveMail receiveMail = new ReceiveMail();
-        List<Auftrag> auftragQueue = new LinkedList<>();
+    @Async
+    public ListenableFuture<Auftrag> startAuftragsService(Mail mail) {
+        Auftrag auftrag = new Auftrag();
         try {
-            receiveMail.login("", "");
-            receiveMail.checkNewMessages();
-            List<Mail> mailList = receiveMail.downloadNewMails();
-
-            for (int i = 0; i < mailList.size(); i++) {
-                for (int j = 0; j < mailList.get(i).getFiles().size(); j++) {
-                    if (mailList.get(i).getFiles().get(j).getFile().getName().contains("TEST")) {
-                        AuftragDataExtractor auftragDataExtractor = new AuftragDataExtractor();
-                        auftragQueue.add((Auftrag) auftragDataExtractor.extractText(mailList.get(i).getFiles().get(j).getFile()));
-                    }
+            for (int j = 0; j < mail.getFiles().size(); j++) {
+                if (mail.getFiles().get(j).getFile().getName().contains("TEST")) {
+                    AuftragDataExtractor auftragDataExtractor = new AuftragDataExtractor();
+                    auftrag = ((Auftrag) auftragDataExtractor.extractText(mail.getFiles().get(j).getFile()));
                 }
             }
+
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } catch (MessagingException e) {
-            throw new RuntimeException(e);
         }
-        return auftragQueue;
+        return AsyncResult.forValue(auftrag);
     }
 }

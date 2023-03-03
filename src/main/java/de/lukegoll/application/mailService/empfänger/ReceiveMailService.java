@@ -5,9 +5,11 @@ import com.sun.mail.imap.IMAPStore;
 import de.lukegoll.application.mailService.Anhänge;
 import de.lukegoll.application.mailService.Mail;
 import de.lukegoll.application.mailService.ServerData;
-import de.lukegoll.application.textextractor.AuftragDataExtractor;
 import jakarta.mail.*;
 import org.jboss.logging.Logger;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.AsyncResult;
+import org.springframework.util.concurrent.ListenableFuture;
 
 import java.io.*;
 import java.util.LinkedList;
@@ -15,10 +17,10 @@ import java.util.List;
 import java.util.Properties;
 
 
-public class ReceiveMail {
+public class ReceiveMailService {
 
     protected Store imapStore;
-    private final Logger logger = Logger.getLogger(ReceiveMail.class);
+    private final Logger logger = Logger.getLogger(ReceiveMailService.class);
 
 
     public void login(String username, String password) throws MessagingException {
@@ -58,7 +60,8 @@ public class ReceiveMail {
 
     }
 
-    public List<Mail> downloadNewMails() throws MessagingException {
+    @Async
+    public ListenableFuture<List<Mail>> downloadNewMails() throws MessagingException {
         if (imapStore == null) {
             throw new IllegalStateException("Zuerst einloggen!");
         }
@@ -98,7 +101,7 @@ public class ReceiveMail {
 
                     BodyPart bodyPart = multipart.getBodyPart(k);
                     int number = (int) (Math.random() * 100);
-                    String filePath = String.format("/Users/lukegollenstede/Desktop/TEST/Files/%s-%d.%s", bodyPart.getFileName(), number,"pdf");
+                    String filePath = String.format("/Users/lukegollenstede/Desktop/TEST/Files/%s-%d.%s", bodyPart.getFileName(), number, "pdf");
                     if (bodyPart.getFileName() == null) {
                         continue;
                     }
@@ -132,7 +135,7 @@ public class ReceiveMail {
             e.printStackTrace();
         }
 
-        return mails;
+        return AsyncResult.forValue(mails);
     }
 
 
