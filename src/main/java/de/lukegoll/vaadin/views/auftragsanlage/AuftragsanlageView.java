@@ -19,6 +19,7 @@ import de.lukegoll.vaadin.views.MainLayout;
 import jakarta.mail.MessagingException;
 import org.springframework.util.concurrent.ListenableFuture;
 
+import java.util.LinkedList;
 import java.util.List;
 
 @PageTitle("Auftragsanlage")
@@ -57,15 +58,21 @@ public class AuftragsanlageView extends VerticalLayout {
                 ButtonVariant.LUMO_SUCCESS);
         startButton.addClickListener(buttonClickEvent -> {
             try {
+
                 UI ui = buttonClickEvent.getSource().getUI().orElseThrow();
-                receiveMailService.login("", "");
                 progressBar.setVisible(true);
-                ListenableFuture<List<Mail>> future = receiveMailService.downloadNewMails();
+
+
+                //stopButton.addClickListener(e -> future.cancel(true));
+              /*  ListenableFuture<String> future = receiveMailService.downloadNewMails();
+                ListenableFuture<List<Auftrag>> futureAufträge ;
+                for (int i = 0; i < future.get().size(); i++) {
+                }
                 future.addCallback(
                         successResult -> updateUi(ui, "Task finished. Anzahl der heruntergeladenen Mails:" + successResult.size()),
                         failureResult -> updateUi(ui, "Task failed" + failureResult.getMessage())
-                );
-                stopButton.addClickListener(e -> future.cancel(true));
+                );*/
+
             } catch (Exception e) {
                 e.printStackTrace();
             }

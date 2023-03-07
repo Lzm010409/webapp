@@ -11,8 +11,8 @@ import com.itextpdf.kernel.pdf.canvas.parser.listener.LocationTextExtractionStra
 
 import de.lukegoll.application.data.entity.persons.Kunde;
 import de.lukegoll.application.textextractor.coordinates.Coordinates;
-import de.lukegoll.application.xmlEntities.caseData.participantData.Contacts;
-import de.lukegoll.application.xmlEntities.caseData.participantData.Participant;
+import de.lukegoll.application.xml.xmlEntities.caseData.participantData.Contacts;
+import de.lukegoll.application.xml.xmlEntities.caseData.participantData.Participant;
 import org.jboss.logging.Logger;
 
 
@@ -93,7 +93,7 @@ public class PersonDataExtractor implements TextExtractor {
                 ));
 
             } else {
-                participant.setvName(list.get(i));
+                setNames(participant,list.get(i));
             }
 
 
@@ -102,6 +102,27 @@ public class PersonDataExtractor implements TextExtractor {
 
         return participant;
 
+    }
+
+    private void setNames(Kunde kunde, String string) {
+        char[] chars = string.toCharArray();
+        StringBuilder vnameBuilder = new StringBuilder();
+        StringBuilder nnameBuilder = new StringBuilder();
+        boolean vname = true;
+        for (int i = 0; i < chars.length; i++) {
+            if (!Character.isLetter(chars[i]) && vname == true && i!=0) {
+                vname = false;
+            }
+            if (vname == true) {
+                vnameBuilder.append(chars[i]);
+            }
+            if (vname == false) {
+                nnameBuilder.append(chars[i]);
+            }
+        }
+
+        kunde.setvName(vnameBuilder.toString());
+        kunde.setnName(nnameBuilder.toString());
     }
 
     private boolean isAdress(String s) {

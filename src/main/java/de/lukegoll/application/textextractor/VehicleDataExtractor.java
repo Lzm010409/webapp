@@ -71,13 +71,13 @@ public class VehicleDataExtractor implements TextExtractor {
             strategy = new FilteredTextEventListener(new LocationTextExtractionStrategy(), regionFilter);
             str = PdfTextExtractor.getTextFromPage(pdfDoc.getPage(1), strategy);
             builder.append(str + "\t");
-            vehicle.setErstZulassung(str);
+            vehicle.setErstZulassung(formatDate(str));
             rect = new Rectangle(Coordinates.FLETZTZUL.getX(), Coordinates.FLETZTZUL.getY(), Coordinates.FLETZTZUL.getWidth(), Coordinates.FLETZTZUL.getHeight());
             regionFilter = new TextRegionEventFilter(rect);
             strategy = new FilteredTextEventListener(new LocationTextExtractionStrategy(), regionFilter);
             str = PdfTextExtractor.getTextFromPage(pdfDoc.getPage(1), strategy);
             builder.append(str + "\t");
-            vehicle.setLetztZulassung(str);
+            vehicle.setLetztZulassung(formatDate(str));
             rect = new Rectangle(Coordinates.FLEISTUNG.getX(), Coordinates.FLEISTUNG.getY(), Coordinates.FLEISTUNG.getWidth(), Coordinates.FLEISTUNG.getHeight());
             regionFilter = new TextRegionEventFilter(rect);
             strategy = new FilteredTextEventListener(new LocationTextExtractionStrategy(), regionFilter);

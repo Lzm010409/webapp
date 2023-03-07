@@ -17,6 +17,8 @@ import org.jboss.logging.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 
 public class AuftragDataExtractor implements TextExtractor {
@@ -39,13 +41,13 @@ public class AuftragDataExtractor implements TextExtractor {
             strategy = new FilteredTextEventListener(new LocationTextExtractionStrategy(), regionFilter);
             str = PdfTextExtractor.getTextFromPage(pdfDoc.getPage(1), strategy);
             builder1.append(str + "\t");
-            auftrag.setAuftragsDatum(str);
+            auftrag.setAuftragsDatum(formatDate(str));
             rect = new Rectangle(Coordinates.SDATUM.getX(), Coordinates.SDATUM.getY(), Coordinates.SDATUM.getWidth(), Coordinates.SDATUM.getHeight());
             regionFilter = new TextRegionEventFilter(rect);
             strategy = new FilteredTextEventListener(new LocationTextExtractionStrategy(), regionFilter);
             str = PdfTextExtractor.getTextFromPage(pdfDoc.getPage(1), strategy);
             builder1.append(str + "\t");
-            auftrag.setSchadenDatum(str);
+            auftrag.setSchadenDatum(formatDate(str));
             rect = new Rectangle(Coordinates.SORT.getX(), Coordinates.SORT.getY(), Coordinates.SORT.getWidth(), Coordinates.SORT.getHeight());
             regionFilter = new TextRegionEventFilter(rect);
             strategy = new FilteredTextEventListener(new LocationTextExtractionStrategy(), regionFilter);
@@ -89,7 +91,7 @@ public class AuftragDataExtractor implements TextExtractor {
             strategy = new FilteredTextEventListener(new LocationTextExtractionStrategy(), regionFilter);
             str = PdfTextExtractor.getTextFromPage(pdfDoc.getPage(1), strategy);
             builder1.append(str + "\t");
-            auftrag.setBedichtigungsDatum(str);
+            auftrag.setBedichtigungsDatum(formatDate(str));
             rect = new Rectangle(Coordinates.BUHRZEIT.getX(), Coordinates.BUHRZEIT.getY(), Coordinates.BUHRZEIT.getWidth(), Coordinates.BUHRZEIT.getHeight());
             regionFilter = new TextRegionEventFilter(rect);
             strategy = new FilteredTextEventListener(new LocationTextExtractionStrategy(), regionFilter);
@@ -126,6 +128,20 @@ public class AuftragDataExtractor implements TextExtractor {
         }
 
         return auftrag;
+    }
+    private String formatDate(String time) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        String dateTime = time.replace("/", "-");
+        char[] chars = dateTime.toCharArray();
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < chars.length; i++) {
+            if (Character.isDigit(chars[i]) || chars[i] == '-') {
+                builder.append(chars[i]);
+            }
+        }
+        dateTime = builder.toString();
+        LocalDate date = LocalDate.parse(dateTime, formatter);
+        return date.toString();
     }
 
     public Auftrag toAuftrag(Object object) {

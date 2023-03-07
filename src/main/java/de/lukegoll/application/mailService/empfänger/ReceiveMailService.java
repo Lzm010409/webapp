@@ -61,7 +61,7 @@ public class ReceiveMailService {
     }
 
     @Async
-    public ListenableFuture<List<Mail>> downloadNewMails() throws MessagingException {
+    public List<Mail> downloadNewMails() throws MessagingException {
         if (imapStore == null) {
             throw new IllegalStateException("Zuerst einloggen!");
         }
@@ -76,15 +76,11 @@ public class ReceiveMailService {
                 Mail mail = new Mail();
                 Address[] toAddress =
                         message.getRecipients(Message.RecipientType.TO);
-                System.out.println("---------------------------------");
-                System.out.println("Details of Email Message "
-                        + (i + 1) + " :");
-                System.out.println("Subject: " + message.getSubject());
                 mail.setBetreff(message.getSubject());
-                System.out.println("From: " + message.getFrom()[0]);
                 mail.setSender(message.getFrom()[0].toString());
-                //Iterate recipients
-                System.out.println("To: ");
+                logger.log(Logger.Level.INFO, "Details of Email Message "
+                        + (i + 1) + " :" + "Subject: " + message.getSubject() + "From: " + message.getFrom()[0]
+                );
                 List<String> empfänger = new LinkedList<>();
                 for (int j = 0; j < toAddress.length; j++) {
                     System.out.println(toAddress[j].toString());
@@ -116,9 +112,14 @@ public class ReceiveMailService {
                     anhänge.setTitle(bodyPart.getFileName());
                     anhängeList.add(anhänge);
                     System.out.println(bodyPart.getFileName());
+                    logger.log(Logger.Level.INFO, "Attachment: " + k + ", " + bodyPart.getFileName()
+                    );
                 }
-                mail.setFiles(anhängeList);
-                mails.add(mail);
+                if (anhängeList.size() != 0) {
+                    mail.setFiles(anhängeList);
+                    mails.add(mail);
+                }
+
             }
 
 
@@ -135,7 +136,7 @@ public class ReceiveMailService {
             e.printStackTrace();
         }
 
-        return AsyncResult.forValue(mails);
+        return mails;
     }
 
 

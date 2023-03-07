@@ -2,7 +2,7 @@ package de.lukegoll.application.data.entity.persons;
 
 
 import de.lukegoll.application.data.entity.Auftrag;
-import de.lukegoll.application.xmlEntities.constants.PersonType;
+import de.lukegoll.application.xml.xmlEntities.constants.PersonType;
 
 import javax.persistence.*;
 import java.util.List;

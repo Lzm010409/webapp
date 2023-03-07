@@ -1,10 +1,10 @@
 package de.lukegoll.application.data.entity;
 
 
-import de.lukegoll.application.xmlEntities.constants.DriveTrain;
-import de.lukegoll.application.xmlEntities.constants.Fuel;
-import de.lukegoll.application.xmlEntities.constants.VehicleColor;
-import de.lukegoll.application.xmlEntities.constants.VehicleRating;
+import de.lukegoll.application.xml.xmlEntities.constants.DriveTrain;
+import de.lukegoll.application.xml.xmlEntities.constants.Fuel;
+import de.lukegoll.application.xml.xmlEntities.constants.VehicleColor;
+import de.lukegoll.application.xml.xmlEntities.constants.VehicleRating;
 
 import javax.persistence.*;
 import java.util.List;
