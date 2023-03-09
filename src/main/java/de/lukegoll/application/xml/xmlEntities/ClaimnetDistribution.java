@@ -7,7 +7,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class ClaimnetDistribution {
     private String receiver_id;
     private String sender_id;
-    private String external_id;
+    private String order_id;
 
     public ClaimnetDistribution() {
 
@@ -16,7 +16,7 @@ public class ClaimnetDistribution {
     public ClaimnetDistribution(String receiver_id, String sender_id, String external_id) {
         this.receiver_id = receiver_id;
         this.sender_id = sender_id;
-        this.external_id = external_id;
+        this.order_id = external_id;
     }
 
     @XmlElement
@@ -38,11 +38,11 @@ public class ClaimnetDistribution {
     }
 
     @XmlElement
-    public String getExternal_id() {
-        return external_id;
+    public String getOrder_id() {
+        return order_id;
     }
 
-    public void setExternal_id(String external_id) {
-        this.external_id = external_id;
+    public void setOrder_id(String order_id) {
+        this.order_id = order_id;
     }
 }

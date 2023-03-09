@@ -3,9 +3,11 @@ package de.lukegoll.application.xml.xmlTranslator;
 import de.lukegoll.application.data.entity.Auftrag;
 import de.lukegoll.application.data.entity.Fahrzeug;
 import de.lukegoll.application.xml.xmlEntities.Case;
+import de.lukegoll.application.xml.xmlEntities.ClaimnetDistribution;
 import de.lukegoll.application.xml.xmlEntities.Document;
 import de.lukegoll.application.xml.xmlEntities.adapter.LocalDateTimeAdapter;
 import de.lukegoll.application.xml.xmlEntities.caseData.Admin_Data;
+import de.lukegoll.application.xml.xmlEntities.caseData.ClaimnetInfo;
 import de.lukegoll.application.xml.xmlEntities.caseData.Vehicle;
 import de.lukegoll.application.xml.xmlEntities.caseData.participantData.*;
 import de.lukegoll.application.xml.xmlEntities.caseData.participantData.Country;
@@ -18,6 +20,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.io.*;
+import java.time.LocalDateTime;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -173,6 +176,26 @@ public class XMLTranslator {
         return participants;
     }
 
+    public ClaimnetInfo auftragToClaimnetInfo(Auftrag auftrag) {
+        ClaimnetInfo claimnetInfo = new ClaimnetInfo();
+        try {
+            claimnetInfo.setOrder_type("Gutachten");
+            claimnetInfo.setDamage_circumstances_gdv(auftrag.getSchadenhergang());
+            claimnetInfo.setDamage_location(auftrag.getSchadenOrt());
+            claimnetInfo.setDamage_reporting_date(new LocalDateTimeAdapter().unmarshal(auftrag.getSchadenDatum()));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return claimnetInfo;
+    }
+
+    public ClaimnetDistribution buildClaimentDistribution(String orderID) {
+        ClaimnetDistribution claimnetDistribution = new ClaimnetDistribution();
+        claimnetDistribution.setReceiver_id("DYCb081c6ac-37a6-4368-bbf0-016eda40d8a3");
+        claimnetDistribution.setSender_id("TestSystem-Gollenstede");
+        claimnetDistribution.setOrder_id(orderID);
+        return claimnetDistribution;
+    }
 
     public void writeXmlFile(Auftrag auftrag, File file) {
         Document document = new Document();
@@ -180,7 +203,11 @@ public class XMLTranslator {
         fall.setAdmin_data(auftragToAdminData(auftrag));
         fall.setVehicle(auftragToVehicle(auftrag));
         fall.setParticipants(auftragToParticipants(auftrag));
+        fall.setClaimnetInfo(auftragToClaimnetInfo(auftrag));
+        document.setClaimnetDistribution(buildClaimentDistribution("TEERETS"));
         document.setFall(fall);
+        LocalDateTime localDateTime = LocalDateTime.now();
+        document.setDate(localDateTime);
         try {
             JAXBContext jc = JAXBContext.newInstance(Document.class);
             Marshaller marshaller = jc.createMarshaller();
@@ -220,7 +247,11 @@ public class XMLTranslator {
                 fall.setAdmin_data(auftragToAdminData(auftrag1));
                 fall.setVehicle(auftragToVehicle(auftrag1));
                 fall.setParticipants(auftragToParticipants(auftrag1));
+                fall.setClaimnetInfo(auftragToClaimnetInfo(auftrag1));
+                document.setClaimnetDistribution(buildClaimentDistribution("TEERETS"));
                 document.setFall(fall);
+                LocalDateTime localDateTime = LocalDateTime.now();
+                document.setDate(localDateTime);
                 try {
                     JAXBContext jc = JAXBContext.newInstance(Document.class);
                     Marshaller marshaller = jc.createMarshaller();

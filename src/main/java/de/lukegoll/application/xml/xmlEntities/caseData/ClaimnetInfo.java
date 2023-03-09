@@ -1,7 +1,11 @@
 package de.lukegoll.application.xml.xmlEntities.caseData;
 
+import de.lukegoll.application.xml.xmlEntities.adapter.LocalDateTimeAdapter;
+
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.time.LocalDateTime;
 import java.util.Date;
 @XmlRootElement
 public class ClaimnetInfo {
@@ -18,7 +22,7 @@ public class ClaimnetInfo {
     private String condition_insurance;
     private Double damage_costs_overall;
     private String damage_location;
-    private Date damage_reporting_date;
+    private LocalDateTime damage_reporting_date;
     private Double discount_general;
     private String insurance_reference_number;
     private String risk_factor_gdv;
@@ -28,7 +32,7 @@ public class ClaimnetInfo {
 
     }
 
-    public ClaimnetInfo(String order_type, String comment, String claim_type_gdv, String claim_type_gdv_code, String damage_division_gdv, String damage_division_gdv_code, String damage_circumstances_gdv, String damage_circumstances_gdv_code, String description_order, String condition_insurance, Double damage_costs_overall, String damage_location, Date damage_reporting_date, Double discount_general, String insurance_reference_number, String risk_factor_gdv, String risk_factor_gdv_code) {
+    public ClaimnetInfo(String order_type, String comment, String claim_type_gdv, String claim_type_gdv_code, String damage_division_gdv, String damage_division_gdv_code, String damage_circumstances_gdv, String damage_circumstances_gdv_code, String description_order, String condition_insurance, Double damage_costs_overall, String damage_location, LocalDateTime damage_reporting_date, Double discount_general, String insurance_reference_number, String risk_factor_gdv, String risk_factor_gdv_code) {
         this.order_type = order_type;
         this.comment = comment;
         this.claim_type_gdv = claim_type_gdv;
@@ -145,11 +149,12 @@ public class ClaimnetInfo {
     }
 
     @XmlElement
-    public Date getDamage_reporting_date() {
+    @XmlJavaTypeAdapter(value = LocalDateTimeAdapter.class)
+    public LocalDateTime getDamage_reporting_date() {
         return damage_reporting_date;
     }
 
-    public void setDamage_reporting_date(Date damage_reporting_date) {
+    public void setDamage_reporting_date(LocalDateTime damage_reporting_date) {
         this.damage_reporting_date = damage_reporting_date;
     }
     @XmlElement

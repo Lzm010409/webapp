@@ -1,14 +1,18 @@
 package de.lukegoll.application.xml.xmlEntities;
 
 
+import de.lukegoll.application.xml.xmlEntities.adapter.LocalDateTimeAdapter;
+
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @XmlRootElement
 public class Document {
 
-    private Date date;
+    private LocalDateTime date;
 
     private Case fall;
     private ClaimnetDistribution claimnetDistribution;
@@ -19,18 +23,19 @@ public class Document {
 
 
 
-    public Document(Date date, Case fall, ClaimnetDistribution claimnetDistribution) {
+    public Document(LocalDateTime date, Case fall, ClaimnetDistribution claimnetDistribution) {
         this.date = date;
         this.fall = fall;
         this.claimnetDistribution = claimnetDistribution;
     }
 
     @XmlElement
-    public Date getDate() {
+    @XmlJavaTypeAdapter(value = LocalDateTimeAdapter.class)
+    public LocalDateTime getDate() {
         return date;
     }
 
-    public void setDate(Date date) {
+    public void setDate(LocalDateTime date) {
         this.date = date;
     }
     @XmlElement
