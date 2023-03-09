@@ -61,7 +61,7 @@ public class ReceiveMailService {
     }
 
     @Async
-    public List<Mail> downloadNewMails() throws MessagingException {
+    public ListenableFuture<List<Mail>> downloadNewMails() throws MessagingException {
         if (imapStore == null) {
             throw new IllegalStateException("Zuerst einloggen!");
         }
@@ -125,18 +125,22 @@ public class ReceiveMailService {
 
             mailFolder.close(false);
             imapStore.close();
+            return AsyncResult.forValue(mails);
         } catch (
                 NoSuchProviderException e) {
             e.printStackTrace();
+            return AsyncResult.forExecutionException(e);
         } catch (
                 MessagingException e) {
             e.printStackTrace();
+            return AsyncResult.forExecutionException(e);
         } catch (
                 Exception e) {
             e.printStackTrace();
+            return AsyncResult.forExecutionException(e);
         }
 
-        return mails;
+
     }
 
 

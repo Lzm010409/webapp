@@ -15,12 +15,14 @@ import de.lukegoll.application.AuftragsAnlageService;
 import de.lukegoll.application.data.entity.Auftrag;
 import de.lukegoll.application.mailService.Mail;
 import de.lukegoll.application.mailService.empfänger.ReceiveMailService;
+import de.lukegoll.application.xml.xmlTranslator.XMLTranslator;
 import de.lukegoll.vaadin.views.MainLayout;
 import jakarta.mail.MessagingException;
 import org.springframework.util.concurrent.ListenableFuture;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 @PageTitle("Auftragsanlage")
 @Route(value = "auftragsanlage", layout = MainLayout.class)
@@ -28,6 +30,8 @@ public class AuftragsanlageView extends VerticalLayout {
     TextArea loggerScreen = new TextArea();
     Button startButton = new Button("Start");
     Button stopButton = new Button("Stop");
+    StringBuilder logBuilder = new StringBuilder();
+    List<String> logList = new LinkedList<>();
     boolean runCondition = false;
 
     ProgressBar progressBar = new ProgressBar();
@@ -41,6 +45,11 @@ public class AuftragsanlageView extends VerticalLayout {
         configureLoggerScreen();
         configureStartButton();
         configureStopButton();
+        try {
+            receiveMailService.login("", "");
+        } catch (MessagingException e) {
+            throw new RuntimeException(e);
+        }
         add(loggerScreen, progressBar, startButton, stopButton);
     }
 
@@ -62,16 +71,26 @@ public class AuftragsanlageView extends VerticalLayout {
                 UI ui = buttonClickEvent.getSource().getUI().orElseThrow();
                 progressBar.setVisible(true);
 
+                ListenableFuture<List<Mail>> mailFuture = receiveMailService.downloadNewMails();
+                ListenableFuture<List<Auftrag>> auftragFuture = new AuftragsAnlageService().startAuftragsService(mailFuture.get());
+                ListenableFuture<List<String>> xmlFuture = new XMLTranslator().writeXmlRequests(auftragFuture.get());
 
-                //stopButton.addClickListener(e -> future.cancel(true));
-              /*  ListenableFuture<String> future = receiveMailService.downloadNewMails();
-                ListenableFuture<List<Auftrag>> futureAufträge ;
-                for (int i = 0; i < future.get().size(); i++) {
+                stopButton.addClickListener(e -> mailFuture.cancel(true));
+
+                for (int i = 0; i < mailFuture.get().size(); i++) {
                 }
-                future.addCallback(
+                mailFuture.addCallback(
                         successResult -> updateUi(ui, "Task finished. Anzahl der heruntergeladenen Mails:" + successResult.size()),
                         failureResult -> updateUi(ui, "Task failed" + failureResult.getMessage())
-                );*/
+                );
+                auftragFuture.addCallback(
+                        successResult -> updateUi(ui, "Anzahl der verarbeiteten Aufträge" + successResult.size()),
+                        failureResult -> updateUi(ui, "Task failed" + failureResult.getMessage())
+                );
+                xmlFuture.addCallback(
+                        successResult -> updateUi(ui, "Es wurden: " + successResult.size() + " Aufträge umgewandelt"),
+                        failureResult -> updateUi(ui, "Task failed" + failureResult.getMessage())
+                );
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -80,8 +99,16 @@ public class AuftragsanlageView extends VerticalLayout {
     }
 
     private void updateUi(UI ui, String result) {
+        if ((logList.size() - 1) > 50) {
+            logBuilder.setLength(0);
+            logList.clear();
+        } else {
+            logList.add(result);
+            logBuilder.append(result + "/n");
+        }
         ui.access(() -> {
             Notification.show(result);
+            loggerScreen.setValue(logBuilder.toString());
             progressBar.setVisible(false);
         });
     }

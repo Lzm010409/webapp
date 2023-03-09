@@ -10,15 +10,17 @@ import de.lukegoll.application.xml.xmlEntities.caseData.Vehicle;
 import de.lukegoll.application.xml.xmlEntities.caseData.participantData.*;
 import de.lukegoll.application.xml.xmlEntities.caseData.participantData.Country;
 import de.lukegoll.application.xml.xmlEntities.constants.*;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.AsyncResult;
+import org.springframework.util.concurrent.ListenableFuture;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 public class XMLTranslator {
 
@@ -205,5 +207,50 @@ public class XMLTranslator {
             }
         }
         return builder.toString();
+    }
+
+    @Async
+    public ListenableFuture<List<String>> writeXmlRequests(List<Auftrag> auftrag) {
+        List<String> xmlList = new LinkedList<>();
+        try {
+            for (Auftrag auftrag1 : auftrag) {
+                String filePath = "src/main/resources/xmlFiles/" + generateRandomString() + ".xml";
+                Document document = new Document();
+                Case fall = new Case();
+                fall.setAdmin_data(auftragToAdminData(auftrag1));
+                fall.setVehicle(auftragToVehicle(auftrag1));
+                fall.setParticipants(auftragToParticipants(auftrag1));
+                document.setFall(fall);
+                try {
+                    JAXBContext jc = JAXBContext.newInstance(Document.class);
+                    Marshaller marshaller = jc.createMarshaller();
+                    marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+                    marshaller.marshal(document, new FileOutputStream(filePath));
+                    xmlList.add(filePath);
+                } catch (JAXBException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return AsyncResult.forValue(xmlList);
+        } catch (Exception e) {
+            return AsyncResult.forExecutionException(e);
+        }
+
+
+    }
+
+    public String generateRandomString() {
+        int leftLimit = 48; // numeral '0'
+        int rightLimit = 122; // letter 'z'
+        int targetStringLength = 10;
+        Random random = new Random();
+
+        String generatedString = random.ints(leftLimit, rightLimit + 1)
+                .filter(i -> (i <= 57 || i >= 65) && (i <= 90 || i >= 97))
+                .limit(targetStringLength)
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                .toString();
+
+        return generatedString;
     }
 }
