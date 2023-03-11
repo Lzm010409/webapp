@@ -1,5 +1,7 @@
 package de.lukegoll.application.textextractor;
 
+import com.itextpdf.forms.PdfAcroForm;
+import com.itextpdf.forms.fields.PdfFormField;
 import com.itextpdf.kernel.geom.Rectangle;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
@@ -9,6 +11,7 @@ import com.itextpdf.kernel.pdf.canvas.parser.listener.FilteredTextEventListener;
 import com.itextpdf.kernel.pdf.canvas.parser.listener.ITextExtractionStrategy;
 import com.itextpdf.kernel.pdf.canvas.parser.listener.LocationTextExtractionStrategy;
 
+import de.lukegoll.application.data.entity.Auftrag;
 import de.lukegoll.application.data.entity.persons.Kunde;
 import de.lukegoll.application.textextractor.coordinates.Coordinates;
 import de.lukegoll.application.xml.xmlEntities.caseData.participantData.Contacts;
@@ -17,15 +20,40 @@ import org.jboss.logging.Logger;
 
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class PersonDataExtractor implements TextExtractor {
     private final Logger logger = Logger.getLogger(PersonDataExtractor.class);
     private Participant testLawyer = new Participant();
 
+    public Kunde extractTextFromFormular(File file) {
+        try {
+
+            PdfReader pdfReader = new PdfReader(file);
+            PdfDocument doc = new PdfDocument(pdfReader);
+            PdfAcroForm pdfAcroForm = PdfAcroForm.getAcroForm(doc, true);
+            Map<String, PdfFormField> pdfFormFieldMap = pdfAcroForm.getFormFields();
+            Kunde kunde = buildCustomer(pdfFormFieldMap.get("Anspruchsteller").getValueAsString());
+            kunde.setAnrede(pdfFormFieldMap.get("Anrede").getValueAsString());
+            kunde.setTel(pdfFormFieldMap.get("Anspruchsteller Telefon").getValueAsString());
+            kunde.setMail(pdfFormFieldMap.get("Anspruchsteller Mail").getValueAsString());
+            logger.log(Logger.Level.INFO, String.format("Folgende Daten wurden ausgelesen: %s, %s %s  Tel.: %s, Mail: %s", kunde.getAnrede(),
+                    kunde.getvName(), kunde.getnName(), kunde.getTel(), kunde.getMail()));
+
+            return kunde;
+        } catch (FileNotFoundException e) {
+            logger.log(Logger.Level.ERROR, "Auslesen nicht erfolgreich, folgender Fehler ist aufgetreten: " + e.getMessage());
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            logger.log(Logger.Level.ERROR, "Auslesen nicht erfolgreich, folgender Fehler ist aufgetreten: " + e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
 
     @Override
     public Kunde extractText(File file) throws IOException {
@@ -93,7 +121,7 @@ public class PersonDataExtractor implements TextExtractor {
                 ));
 
             } else {
-                setNames(participant,list.get(i));
+                setNames(participant, list.get(i));
             }
 
 
@@ -110,7 +138,7 @@ public class PersonDataExtractor implements TextExtractor {
         StringBuilder nnameBuilder = new StringBuilder();
         boolean vname = true;
         for (int i = 0; i < chars.length; i++) {
-            if (!Character.isLetter(chars[i]) && vname == true && i!=0) {
+            if (!Character.isLetter(chars[i]) && vname == true && i != 0) {
                 vname = false;
             }
             if (vname == true) {

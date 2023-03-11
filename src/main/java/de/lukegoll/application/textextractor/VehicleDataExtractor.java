@@ -1,6 +1,8 @@
 package de.lukegoll.application.textextractor;
 
 
+import com.itextpdf.forms.PdfAcroForm;
+import com.itextpdf.forms.fields.PdfFormField;
 import com.itextpdf.kernel.geom.Rectangle;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
@@ -11,6 +13,7 @@ import com.itextpdf.kernel.pdf.canvas.parser.listener.ITextExtractionStrategy;
 import com.itextpdf.kernel.pdf.canvas.parser.listener.LocationTextExtractionStrategy;
 
 import de.lukegoll.application.data.entity.Fahrzeug;
+import de.lukegoll.application.data.entity.persons.Kunde;
 import de.lukegoll.application.textextractor.coordinates.Coordinates;
 import org.jboss.logging.Logger;
 
@@ -19,9 +22,46 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 public class VehicleDataExtractor implements TextExtractor {
     private final Logger logger = Logger.getLogger(VehicleDataExtractor.class);
+
+    public Fahrzeug extractTextFromFormular(File file) {
+        try {
+            Fahrzeug fahrzeug = new Fahrzeug();
+            PdfReader pdfReader = new PdfReader(file);
+            PdfDocument doc = new PdfDocument(pdfReader);
+            PdfAcroForm pdfAcroForm = PdfAcroForm.getAcroForm(doc, true);
+            Map<String, PdfFormField> pdfFormFieldMap = pdfAcroForm.getFormFields();
+            for (String key : pdfFormFieldMap.keySet()) {
+                if (pdfFormFieldMap.get(key).getValueAsString().equalsIgnoreCase("off") || pdfFormFieldMap.get(key).getValueAsString() == "") {
+                    pdfFormFieldMap.remove(key);
+                }
+            }
+            fahrzeug.setAmtlKennzeichen(pdfFormFieldMap.get("Amtl Kennzeichen").getValueAsString());
+            fahrzeug.setFahrzeugArt(pdfFormFieldMap.get("Fahrzeugart").getValueAsString());
+            fahrzeug.setHersteller(pdfFormFieldMap.get("Hersteller").getValueAsString());
+            fahrzeug.setTyp(pdfFormFieldMap.get("Typ Ausführung").getValueAsString());
+            fahrzeug.setHsntsn(formatHsnTsn(pdfFormFieldMap.get("HSN TSN").getValueAsString()));
+            fahrzeug.setFin(pdfFormFieldMap.get("FIN").getValueAsString());
+            fahrzeug.setErstZulassung(formatDate(pdfFormFieldMap.get("Erste Zulassung").getValueAsString()));
+            fahrzeug.setLetztZulassung(formatDate(pdfFormFieldMap.get("Letzte Zulassung").getValueAsString()));
+            fahrzeug.setLeistung(Integer.valueOf(pdfFormFieldMap.get("Leistung").getValueAsString()));
+            fahrzeug.setHubraum(Integer.valueOf(pdfFormFieldMap.get("Hubraum").getValueAsString()));
+            fahrzeug.setHu(pdfFormFieldMap.get("HU").getValueAsString());
+            fahrzeug.setAnzVorbesitzer(Integer.parseInt(pdfFormFieldMap.get("Anzahl Vorbesitzer").getValueAsString()));
+            fahrzeug.setKmStand(Integer.parseInt(pdfFormFieldMap.get("Laufleistung").getValueAsString()));
+            fahrzeug.setReifenVorne(pdfFormFieldMap.get("Bereifung vorne").getValueAsString());
+            fahrzeug.setReifenHinten(pdfFormFieldMap.get("Bereifung hinten").getValueAsString());
+            fahrzeug.setReifenHersteller(pdfFormFieldMap.get("Reifenhersteller").getValueAsString());
+            fahrzeug.setProfilTiefe(pdfFormFieldMap.get("Profiltiefe").getValueAsString());
+            fahrzeug.setSchadstoffKlasse(pdfFormFieldMap.get("Schadstoffklasse").getValueAsString());
+            return fahrzeug;
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
     @Override
     public Fahrzeug extractText(File file) throws IOException {
@@ -228,5 +268,10 @@ public class VehicleDataExtractor implements TextExtractor {
             }
         }
         return builder.toString();
+    }
+
+    public static void main(String[] args) throws IOException {
+        VehicleDataExtractor personDataExtractor = new VehicleDataExtractor();
+        personDataExtractor.extractTextFromFormular(new File("/Users/lukegollenstede/Desktop/TEST/Aufnahmebogen Kfz-SAchverständigenbürio Gollenstede.pdf"));
     }
 }
