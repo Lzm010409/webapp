@@ -46,7 +46,7 @@ public class AuftragsanlageView extends VerticalLayout {
         configureStartButton();
         configureStopButton();
         try {
-            receiveMailService.login("", "");
+            receiveMailService.login("Entwicklung@gollenstede-entwicklung.de", "rijdyg-tatquw-8pebzU");
         } catch (MessagingException e) {
             throw new RuntimeException(e);
         }

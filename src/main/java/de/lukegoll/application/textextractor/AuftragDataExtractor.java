@@ -1,5 +1,7 @@
 package de.lukegoll.application.textextractor;
 
+import com.itextpdf.forms.PdfAcroForm;
+import com.itextpdf.forms.fields.PdfFormField;
 import com.itextpdf.kernel.geom.Rectangle;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
@@ -9,6 +11,8 @@ import com.itextpdf.kernel.pdf.canvas.parser.listener.FilteredTextEventListener;
 import com.itextpdf.kernel.pdf.canvas.parser.listener.ITextExtractionStrategy;
 import com.itextpdf.kernel.pdf.canvas.parser.listener.LocationTextExtractionStrategy;
 import de.lukegoll.application.data.entity.Auftrag;
+import de.lukegoll.application.data.entity.Fahrzeug;
+import de.lukegoll.application.data.entity.persons.Kunde;
 import de.lukegoll.application.data.entity.persons.Rechtsanwalt;
 import de.lukegoll.application.data.entity.persons.Versicherung;
 import de.lukegoll.application.textextractor.coordinates.Coordinates;
@@ -19,9 +23,33 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 
 public class AuftragDataExtractor implements TextExtractor {
+    public Auftrag extractTextFromFormular(File file) {
+        try {
+            PdfReader pdfReader = new PdfReader(file);
+            PdfDocument doc = new PdfDocument(pdfReader);
+            PdfAcroForm pdfAcroForm = PdfAcroForm.getAcroForm(doc, true);
+            Map<String, PdfFormField> pdfFormFieldMap = pdfAcroForm.getFormFields();
+            Auftrag auftrag = new Auftrag();
+            auftrag.setAuftragsDatum(formatDate(pdfFormFieldMap.get("Auftragsdatum").getValueAsString()));
+            auftrag.setBesichtigungsort(pdfFormFieldMap.get("Auftragsdatum").getValueAsString());
+            auftrag.setSchadenhergang(pdfFormFieldMap.get("Schadenhergang").getValueAsString());
+            auftrag.setSchadenDatum(formatDate(pdfFormFieldMap.get("Schadendatum").getValueAsString()));
+            auftrag.setSchadenOrt(pdfFormFieldMap.get("Schadenort").getValueAsString());
+            auftrag.setGutachtenNummer(pdfFormFieldMap.get("Gutachtennummer").getValueAsString());
+            auftrag.setBedichtigungsDatum(pdfFormFieldMap.get("Besichtigungsdatum").getValueAsString());
+            auftrag.setBesichtigungsUhrzeit(pdfFormFieldMap.get("Besichtigungsuhrzeit").getValueAsString());
+            auftrag.setAuftragsBesonderheiten(pdfFormFieldMap.get("Notizen").getValueAsString());
+            auftrag.setKennzeichenUG(pdfFormFieldMap.get("Kennzeichen-UG").getValueAsString());
+            return auftrag;
+        } catch (IOException e) {
+            return null;
+
+        }
+    }
 
     private final Logger logger = Logger.getLogger(AuftragDataExtractor.class);
 
@@ -129,6 +157,7 @@ public class AuftragDataExtractor implements TextExtractor {
 
         return auftrag;
     }
+
     private String formatDate(String time) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         String dateTime = time.replace("/", "-");
@@ -154,6 +183,6 @@ public class AuftragDataExtractor implements TextExtractor {
 
     public static void main(String[] args) throws IOException {
         AuftragDataExtractor personDataExtractor = new AuftragDataExtractor();
-        personDataExtractor.extractText(new File("/Users/lukegollenstede/Desktop/TEST/TEST.pdf"));
+        personDataExtractor.extractTextFromFormular(new File("/Users/lukegollenstede/Desktop/TEST/Aufnahmebogen Kfz-SAchverständigenbürio Gollenstede.pdf"));
     }
 }
