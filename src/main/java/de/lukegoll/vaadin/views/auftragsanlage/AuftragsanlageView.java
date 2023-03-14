@@ -15,6 +15,7 @@ import de.lukegoll.application.AuftragsAnlageService;
 import de.lukegoll.application.data.entity.Auftrag;
 import de.lukegoll.application.mailService.Mail;
 import de.lukegoll.application.mailService.empfänger.ReceiveMailService;
+import de.lukegoll.application.restfulapi.requests.Request;
 import de.lukegoll.application.xml.xmlTranslator.XMLTranslator;
 import de.lukegoll.vaadin.views.MainLayout;
 import jakarta.mail.MessagingException;
@@ -46,7 +47,7 @@ public class AuftragsanlageView extends VerticalLayout {
         configureStartButton();
         configureStopButton();
         try {
-            receiveMailService.login("Entwicklung@gollenstede-entwicklung.de", "rijdyg-tatquw-8pebzU");
+            receiveMailService.login("Entwicklung@gollenstede-entwicklung.de", "");
         } catch (MessagingException e) {
             throw new RuntimeException(e);
         }
@@ -74,6 +75,8 @@ public class AuftragsanlageView extends VerticalLayout {
                 ListenableFuture<List<Mail>> mailFuture = receiveMailService.downloadNewMails();
                 ListenableFuture<List<Auftrag>> auftragFuture = new AuftragsAnlageService().startAuftragsService(mailFuture.get());
                 ListenableFuture<List<String>> xmlFuture = new XMLTranslator().writeXmlRequests(auftragFuture.get());
+                ListenableFuture<String> restFuture = new Request().httpPost(xmlFuture.get().get(0),"https://intacc01-api.onrex.de/interfaces/orders",
+                        "ZDJhMGQzYWUtN2QyMy00YTMxLWI5YjMtM2MyMDJlMDAyM2EyOjA4YjE2MWQyLTEyZmQtNGEzMS1iNTM2LTlkMDAyM2I3N2RhNA==");
 
                 stopButton.addClickListener(e -> mailFuture.cancel(true));
 
