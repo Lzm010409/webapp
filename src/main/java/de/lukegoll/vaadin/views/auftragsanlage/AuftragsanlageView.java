@@ -96,7 +96,6 @@ public class AuftragsanlageView extends VerticalLayout {
         });
     }
 
-
     public Button getStartButton() {
         return startButton;
     }

@@ -59,7 +59,7 @@ public class AuftragsVerarbeitungBean extends Thread {
                 List<String> stringList = new LinkedList<>();
                 try {
 
-                    receiveMailService.login("Entwicklung@gollenstede-entwicklung.de", "");
+                    receiveMailService.login("Entwicklung@gollenstede-entwicklung.de", "" );
                     ListenableFuture<List<Message>> messageFuture = receiveMailService.downloadNewMails();
                     messageFuture.addCallback(
                             successResult -> view.updateUi(ui, LocalDateTime.now().toString() +" Mails heruntergeladen: " + successResult.size()),
@@ -80,7 +80,7 @@ public class AuftragsVerarbeitungBean extends Thread {
                                 failureResult -> view.updateUi(ui, LocalDateTime.now().toString() +" Fehler beim erstellen der XML-Dateien:" + failureResult));
                         for(int i=0; i<xmlFuture.get().size();i++){
                             ListenableFuture<String> restFuture = new Request().httpPost(xmlFuture.get().get(i),
-                                    "https://intacc01-api.onrex.de/interfaces/orders", "ZDJhMGQzYWUtN2QyMy00YTMxLWI5YjMtM2MyMDJlMDAyM2EyOjA4YjE2MWQyLTEyZmQtNGEzMS1iNTM2LTlkMDAyM2I3N2RhNA==");
+                                    "https://intacc01-api.onrex.de/interfaces/orders", "");
                             restFuture.addCallback(
                                     successResult -> view.updateUi(ui, LocalDateTime.now().toString() +" Übertragung an Dynarex-Server erfolgreich: " +successResult),
                                     failureResult -> view.updateUi(ui, LocalDateTime.now().toString() +" Fehler beim übertragen an Dynarex-Server: " + failureResult));
