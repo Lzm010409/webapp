@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.util.concurrent.ListenableFuture;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -46,7 +47,6 @@ public class ReceiveMailService {
         if (imapStore == null) {
             throw new IllegalStateException("Zuerst einloggen!");
         }
-
         Folder mailFolder = imapStore.getFolder("INBOX");
         mailFolder.open(Folder.READ_ONLY);
 
@@ -67,7 +67,6 @@ public class ReceiveMailService {
         }
         List<Mail> mails = new LinkedList<>();
         try {
-
             Folder mailFolder = imapStore.getFolder("INBOX");
             mailFolder.open(Folder.READ_ONLY);
             Message[] messages = mailFolder.getMessages();
@@ -124,7 +123,7 @@ public class ReceiveMailService {
 
 
             mailFolder.close(false);
-            imapStore.close();
+            //imapStore.close();
             return AsyncResult.forValue(mails);
         } catch (
                 NoSuchProviderException e) {
@@ -141,6 +140,24 @@ public class ReceiveMailService {
         }
 
 
+    }
+
+    public void moveMails(List<Mail> mailList) {
+        if (imapStore == null) {
+            throw new IllegalStateException("Zuerst einloggen!");
+        }
+        try {
+            Folder verarbeitet = imapStore.getFolder("Verarbeitet");
+            Folder mailFolder = imapStore.getFolder("INBOX");
+            mailFolder.open(Folder.READ_WRITE);
+            Message[] messages = mailFolder.getMessages();
+            mailFolder.copyMessages(messages, verarbeitet);
+            mailFolder.setFlags(messages, new Flags(Flags.Flag.DELETED), true);
+            mailFolder.expunge();
+            imapStore.close();
+        } catch (MessagingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 

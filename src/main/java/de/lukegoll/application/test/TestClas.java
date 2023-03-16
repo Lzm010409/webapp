@@ -5,27 +5,26 @@ import com.itextpdf.forms.PdfAcroForm;
 import com.itextpdf.forms.fields.PdfFormField;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 
+@Component
 public class TestClas {
 
-    public static void main (String[]args){
-        try {
-            PdfReader pdfReader = new PdfReader(new File("/Users/lukegollenstede/Desktop/TEST/Aufnahmebogen Kfz-SAchverständigenbürio Gollenstede.pdf"));
-            PdfDocument doc = new PdfDocument(pdfReader);
-            PdfAcroForm pdfAcroForm = PdfAcroForm.getAcroForm(doc,true);
-            Map<String, PdfFormField> pdfFormFieldMap =pdfAcroForm.getFormFields();
+    private static final Logger log = LoggerFactory.getLogger(TestClas.class);
 
-            for(String key: pdfFormFieldMap.keySet()){
-                System.out.println("Feld: " + key + " mit Wert: " + pdfFormFieldMap.get(key).getValueAsString());
-            }
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
+    public void reportCurrentTime() {
+        log.info("The time is now {}", dateFormat.format(new Date()));
     }
 }
+

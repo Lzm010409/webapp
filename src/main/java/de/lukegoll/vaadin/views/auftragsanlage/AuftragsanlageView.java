@@ -1,143 +1,98 @@
 package de.lukegoll.vaadin.views.auftragsanlage;
 
-import com.vaadin.collaborationengine.CollaborationAvatarGroup;
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
-import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import de.lukegoll.application.AuftragsAnlageService;
-import de.lukegoll.application.data.entity.Auftrag;
-import de.lukegoll.application.mailService.Mail;
+import com.vaadin.flow.spring.annotation.UIScope;
+import com.vaadin.flow.spring.annotation.VaadinSessionScope;
+import de.lukegoll.application.beans.AuftragsVerarbeitungBean;
+import de.lukegoll.application.logWriter.LogWriter;
 import de.lukegoll.application.mailService.empfänger.ReceiveMailService;
-import de.lukegoll.application.restfulapi.requests.Request;
-import de.lukegoll.application.xml.xmlTranslator.XMLTranslator;
 import de.lukegoll.vaadin.views.MainLayout;
-import jakarta.mail.MessagingException;
-import org.springframework.util.concurrent.ListenableFuture;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
+import javax.servlet.Registration;
+import javax.swing.event.ChangeEvent;
+import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 
 @PageTitle("Auftragsanlage")
 @Route(value = "auftragsanlage", layout = MainLayout.class)
 public class AuftragsanlageView extends VerticalLayout {
-    TextArea loggerScreen = new TextArea();
+    //TextArea loggerScreen = new TextArea();
     Button startButton = new Button("Start");
     Button stopButton = new Button("Stop");
+    VerticalLayout loggerScreen = new VerticalLayout();
     StringBuilder logBuilder = new StringBuilder();
     List<String> logList = new LinkedList<>();
     boolean runCondition = false;
 
+    private AuftragsVerarbeitungBean thread;
     ProgressBar progressBar = new ProgressBar();
-    AuftragsAnlageService auftragsAnlageService = new AuftragsAnlageService();
     ReceiveMailService receiveMailService = new ReceiveMailService();
+
 
     public AuftragsanlageView() {
         progressBar.setWidth("15em");
         progressBar.setIndeterminate(true);
         progressBar.setVisible(false);
-        configureLoggerScreen();
+        //configureLoggerScreen();
         configureStartButton();
         configureStopButton();
-        try {
-            receiveMailService.login("Entwicklung@gollenstede-entwicklung.de", "");
-        } catch (MessagingException e) {
-            throw new RuntimeException(e);
-        }
+
         add(loggerScreen, progressBar, startButton, stopButton);
-    }
-
-
-    private void configureLoggerScreen() {
-        loggerScreen.setHeightFull();
-        loggerScreen.setLabel("Log");
-        loggerScreen.setEnabled(false);
-        loggerScreen.setHeight("500px");
-        loggerScreen.setWidth("500px");
     }
 
     private void configureStartButton() {
         startButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY,
                 ButtonVariant.LUMO_SUCCESS);
-        startButton.addClickListener(buttonClickEvent -> {
-            try {
-
-                UI ui = buttonClickEvent.getSource().getUI().orElseThrow();
-                progressBar.setVisible(true);
-
-                ListenableFuture<List<Mail>> mailFuture = receiveMailService.downloadNewMails();
-                ListenableFuture<List<Auftrag>> auftragFuture = new AuftragsAnlageService().startAuftragsService(mailFuture.get());
-                ListenableFuture<List<String>> xmlFuture = new XMLTranslator().writeXmlRequests(auftragFuture.get());
-                ListenableFuture<String> restFuture = new Request().httpPost(xmlFuture.get().get(0),"https://intacc01-api.onrex.de/interfaces/orders",
-                        "ZDJhMGQzYWUtN2QyMy00YTMxLWI5YjMtM2MyMDJlMDAyM2EyOjA4YjE2MWQyLTEyZmQtNGEzMS1iNTM2LTlkMDAyM2I3N2RhNA==");
-
-                stopButton.addClickListener(e -> mailFuture.cancel(true));
-
-                for (int i = 0; i < mailFuture.get().size(); i++) {
-                }
-                mailFuture.addCallback(
-                        successResult -> updateUi(ui, "Task finished. Anzahl der heruntergeladenen Mails:" + successResult.size()),
-                        failureResult -> updateUi(ui, "Task failed" + failureResult.getMessage())
-                );
-                auftragFuture.addCallback(
-                        successResult -> updateUi(ui, "Anzahl der verarbeiteten Aufträge" + successResult.size()),
-                        failureResult -> updateUi(ui, "Task failed" + failureResult.getMessage())
-                );
-                xmlFuture.addCallback(
-                        successResult -> updateUi(ui, "Es wurden: " + successResult.size() + " Aufträge umgewandelt"),
-                        failureResult -> updateUi(ui, "Task failed" + failureResult.getMessage())
-                );
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
     }
 
-    private void updateUi(UI ui, String result) {
-        if ((logList.size() - 1) > 50) {
-            logBuilder.setLength(0);
-            logList.clear();
-        } else {
-            logList.add(result);
-            logBuilder.append(result + "/n");
-        }
+    public void updateUi(UI ui, String result) {
         ui.access(() -> {
             Notification.show(result);
-            loggerScreen.setValue(logBuilder.toString());
-            progressBar.setVisible(false);
+            loggerScreen.add(new Span(result));
+            //progressBar.setVisible(false);
         });
     }
 
-    private void configureStopButton() {
 
+    private void configureStopButton() {
         stopButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY,
                 ButtonVariant.LUMO_ERROR);
+
     }
 
-  /*  private void startAuftragsService(boolean start) throws InterruptedException {
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        loggerScreen.add(new Span("Waiting for updates"));
 
-        runCondition = start;
-        while (runCondition = true) {
-            List<Auftrag> auftragList = this.auftragsAnlageService.startAuftragsService(receiveMailService);
-            Thread.sleep(10000);
-        }
-    }*/
-
-    public TextArea getLoggerScreen() {
-        return loggerScreen;
+        // Start the data feed thread
+        thread = new AuftragsVerarbeitungBean(attachEvent.getUI(), this);
+        thread.start();
     }
 
-    public void setLoggerScreen(TextArea loggerScreen) {
-        this.loggerScreen = loggerScreen;
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        // Cleanup
+        thread.interrupt();
+        thread = null;
     }
+
+
+
 
     public Button getStartButton() {
         return startButton;
@@ -163,11 +118,44 @@ public class AuftragsanlageView extends VerticalLayout {
         this.runCondition = runCondition;
     }
 
-    public AuftragsAnlageService getAuftragsAnlageService() {
-        return auftragsAnlageService;
+    public VerticalLayout getLoggerScreen() {
+        return loggerScreen;
     }
 
-    public void setAuftragsAnlageService(AuftragsAnlageService auftragsAnlageService) {
-        this.auftragsAnlageService = auftragsAnlageService;
+    public void setLoggerScreen(VerticalLayout loggerScreen) {
+        this.loggerScreen = loggerScreen;
+    }
+
+    public StringBuilder getLogBuilder() {
+        return logBuilder;
+    }
+
+    public void setLogBuilder(StringBuilder logBuilder) {
+        this.logBuilder = logBuilder;
+    }
+
+    public List<String> getLogList() {
+        return logList;
+    }
+
+    public void setLogList(List<String> logList) {
+        this.logList = logList;
+    }
+
+
+    public ProgressBar getProgressBar() {
+        return progressBar;
+    }
+
+    public void setProgressBar(ProgressBar progressBar) {
+        this.progressBar = progressBar;
+    }
+
+    public ReceiveMailService getReceiveMailService() {
+        return receiveMailService;
+    }
+
+    public void setReceiveMailService(ReceiveMailService receiveMailService) {
+        this.receiveMailService = receiveMailService;
     }
 }
