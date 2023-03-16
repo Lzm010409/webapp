@@ -26,7 +26,7 @@ public class Request {
         );
         HttpPost httpPost = new HttpPost(URL);
         httpPost.setEntity(requestEntity);
-        String token  = "Basic["+TOKEN+"]";
+        String token  = "Basic " + TOKEN;
         httpPost.setHeader("Authorization", token);
 
         try (CloseableHttpResponse response = httpclient.execute(httpPost)) {

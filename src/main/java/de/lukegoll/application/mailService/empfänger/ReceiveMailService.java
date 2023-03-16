@@ -61,7 +61,7 @@ public class ReceiveMailService {
     }
 
     @Async
-    public ListenableFuture<List<Mail>> downloadNewMails() throws MessagingException {
+    public ListenableFuture<List<Message>> downloadNewMails() throws MessagingException {
         if (imapStore == null) {
             throw new IllegalStateException("Zuerst einloggen!");
         }
@@ -70,8 +70,29 @@ public class ReceiveMailService {
             Folder mailFolder = imapStore.getFolder("INBOX");
             mailFolder.open(Folder.READ_ONLY);
             Message[] messages = mailFolder.getMessages();
-            for (int i = 0; i < messages.length; i++) {
-                Message message = messages[i];
+            return AsyncResult.forValue(Arrays.asList(messages));
+        } catch (
+                NoSuchProviderException e) {
+            e.printStackTrace();
+            return AsyncResult.forExecutionException(e);
+        } catch (
+                MessagingException e) {
+            e.printStackTrace();
+            return AsyncResult.forExecutionException(e);
+        } catch (
+                Exception e) {
+            e.printStackTrace();
+            return AsyncResult.forExecutionException(e);
+        }
+
+
+    }
+
+    public ListenableFuture<List<Mail>> extractAttachments(List<Message> messages) {
+        List<Mail> mails = new LinkedList<>();
+        try {
+            for (int i = 0; i < messages.size(); i++) {
+                Message message = messages.get(i);
                 Mail mail = new Mail();
                 Address[] toAddress =
                         message.getRecipients(Message.RecipientType.TO);
@@ -86,9 +107,6 @@ public class ReceiveMailService {
                     empfänger.add(toAddress[j].toString());
                 }
                 mail.setEmpfänger(empfänger);
-
-
-                //Iterate multiparts
                 Multipart multipart = (Multipart) message.getContent();
                 List<Anhänge> anhängeList = new LinkedList<>();
                 for (int k = 0; k < multipart.getCount(); k++) {
@@ -96,7 +114,7 @@ public class ReceiveMailService {
 
                     BodyPart bodyPart = multipart.getBodyPart(k);
                     int number = (int) (Math.random() * 100);
-                    String filePath = String.format("/Users/lukegollenstede/Desktop/TEST/Files/%s-%d.%s", bodyPart.getFileName(), number, "pdf");
+                    String filePath = String.format("/Users/lukegollenstede/Desktop/TEST/Files/%s-%d.\\%s", bodyPart.getFileName(), number, "pdf");
                     if (bodyPart.getFileName() == null) {
                         continue;
                     }
@@ -120,25 +138,11 @@ public class ReceiveMailService {
                 }
 
             }
-
-
-            mailFolder.close(false);
-            //imapStore.close();
             return AsyncResult.forValue(mails);
         } catch (
-                NoSuchProviderException e) {
-            e.printStackTrace();
-            return AsyncResult.forExecutionException(e);
-        } catch (
-                MessagingException e) {
-            e.printStackTrace();
-            return AsyncResult.forExecutionException(e);
-        } catch (
                 Exception e) {
-            e.printStackTrace();
             return AsyncResult.forExecutionException(e);
         }
-
 
     }
 

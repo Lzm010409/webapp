@@ -14,6 +14,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.annotation.UIScope;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import de.lukegoll.application.beans.AuftragsVerarbeitungBean;
+import de.lukegoll.application.events.LogEvent;
 import de.lukegoll.application.logWriter.LogWriter;
 import de.lukegoll.application.mailService.empfänger.ReceiveMailService;
 import de.lukegoll.vaadin.views.MainLayout;
@@ -39,7 +40,10 @@ public class AuftragsanlageView extends VerticalLayout {
     List<String> logList = new LinkedList<>();
     boolean runCondition = false;
 
+    int logLength = 0;
+
     private AuftragsVerarbeitungBean thread;
+
     ProgressBar progressBar = new ProgressBar();
     ReceiveMailService receiveMailService = new ReceiveMailService();
 
@@ -51,47 +55,46 @@ public class AuftragsanlageView extends VerticalLayout {
         //configureLoggerScreen();
         configureStartButton();
         configureStopButton();
-
         add(loggerScreen, progressBar, startButton, stopButton);
     }
 
     private void configureStartButton() {
         startButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY,
                 ButtonVariant.LUMO_SUCCESS);
+        loggerScreen.add(new Span("Waiting for updates"));
+        startButton.addClickListener(buttonClickEvent -> {
+            thread = new AuftragsVerarbeitungBean(buttonClickEvent.getSource().getUI().orElseThrow(), this);
+            thread.start();
+        });
+
     }
 
     public void updateUi(UI ui, String result) {
-        ui.access(() -> {
-            Notification.show(result);
-            loggerScreen.add(new Span(result));
-            //progressBar.setVisible(false);
-        });
+        logLength += 1;
+        if (logLength <= 10) {
+            ui.access(() -> {
+                loggerScreen.add(new Span(result));
+                //progressBar.setVisible(false);
+            });
+        } else {
+            ui.access(() -> {
+                loggerScreen.removeAll();
+                logLength = 1;
+                loggerScreen.add(new Span(result));
+            });
+        }
+
     }
 
 
     private void configureStopButton() {
         stopButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY,
                 ButtonVariant.LUMO_ERROR);
-
+        stopButton.addClickListener(buttonClickEvent -> {
+            thread.interrupt();
+            thread = null;
+        });
     }
-
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
-        loggerScreen.add(new Span("Waiting for updates"));
-
-        // Start the data feed thread
-        thread = new AuftragsVerarbeitungBean(attachEvent.getUI(), this);
-        thread.start();
-    }
-
-    @Override
-    protected void onDetach(DetachEvent detachEvent) {
-        // Cleanup
-        thread.interrupt();
-        thread = null;
-    }
-
-
 
 
     public Button getStartButton() {
