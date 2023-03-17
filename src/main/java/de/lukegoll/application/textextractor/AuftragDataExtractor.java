@@ -27,6 +27,10 @@ import java.util.Map;
 
 
 public class AuftragDataExtractor implements TextExtractor {
+
+
+    private final Logger logger = Logger.getLogger(AuftragDataExtractor.class);
+
     public Auftrag extractTextFromFormular(File file) {
         try {
             PdfReader pdfReader = new PdfReader(file);
@@ -44,15 +48,14 @@ public class AuftragDataExtractor implements TextExtractor {
             auftrag.setBesichtigungsUhrzeit(pdfFormFieldMap.get("Besichtigungsuhrzeit").getValueAsString());
             auftrag.setAuftragsBesonderheiten(pdfFormFieldMap.get("Notizen").getValueAsString());
             auftrag.setKennzeichenUG(pdfFormFieldMap.get("Kennzeichen-UG").getValueAsString());
+            auftrag.setFahrzeug(new VehicleDataExtractor().extractTextFromFormular(file));
+            auftrag.setKunde(new PersonDataExtractor().extractTextFromFormular(file));
             return auftrag;
         } catch (IOException e) {
             return null;
 
         }
     }
-
-    private final Logger logger = Logger.getLogger(AuftragDataExtractor.class);
-
     @Override
     public Object extractText(File file) throws IOException {
         Rectangle rect;

@@ -34,11 +34,11 @@ public class VehicleDataExtractor implements TextExtractor {
             PdfDocument doc = new PdfDocument(pdfReader);
             PdfAcroForm pdfAcroForm = PdfAcroForm.getAcroForm(doc, true);
             Map<String, PdfFormField> pdfFormFieldMap = pdfAcroForm.getFormFields();
-            for (String key : pdfFormFieldMap.keySet()) {
+           /* for (String key : pdfFormFieldMap.keySet()) {
                 if (pdfFormFieldMap.get(key).getValueAsString().equalsIgnoreCase("off") || pdfFormFieldMap.get(key).getValueAsString() == "") {
                     pdfFormFieldMap.remove(key);
                 }
-            }
+            }*/
             fahrzeug.setAmtlKennzeichen(pdfFormFieldMap.get("Amtl Kennzeichen").getValueAsString());
             fahrzeug.setFahrzeugArt(pdfFormFieldMap.get("Fahrzeugart").getValueAsString());
             fahrzeug.setHersteller(pdfFormFieldMap.get("Hersteller").getValueAsString());
@@ -47,11 +47,19 @@ public class VehicleDataExtractor implements TextExtractor {
             fahrzeug.setFin(pdfFormFieldMap.get("FIN").getValueAsString());
             fahrzeug.setErstZulassung(formatDate(pdfFormFieldMap.get("Erste Zulassung").getValueAsString()));
             fahrzeug.setLetztZulassung(formatDate(pdfFormFieldMap.get("Letzte Zulassung").getValueAsString()));
-            fahrzeug.setLeistung(Integer.valueOf(pdfFormFieldMap.get("Leistung").getValueAsString()));
-            fahrzeug.setHubraum(Integer.valueOf(pdfFormFieldMap.get("Hubraum").getValueAsString()));
-            fahrzeug.setHu(pdfFormFieldMap.get("HU").getValueAsString());
-            fahrzeug.setAnzVorbesitzer(Integer.parseInt(pdfFormFieldMap.get("Anzahl Vorbesitzer").getValueAsString()));
-            fahrzeug.setKmStand(Integer.parseInt(pdfFormFieldMap.get("Laufleistung").getValueAsString()));
+            if (!(pdfFormFieldMap.get("Leistung").getValueAsString().isEmpty())) {
+                fahrzeug.setLeistung(Integer.valueOf(pdfFormFieldMap.get("Leistung").getValueAsString()));
+            }
+            if (!(pdfFormFieldMap.get("Hubraum").getValueAsString().isEmpty())) {
+                fahrzeug.setHubraum(Integer.valueOf(pdfFormFieldMap.get("Hubraum").getValueAsString()));
+            }
+            fahrzeug.setHu(pdfFormFieldMap.get("HU.1").getValueAsString());
+            if (!(pdfFormFieldMap.get("Anzahl Vorbesitzer").getValueAsString().isEmpty())) {
+                fahrzeug.setAnzVorbesitzer(Integer.parseInt(pdfFormFieldMap.get("Anzahl Vorbesitzer").getValueAsString()));
+            }
+            if (!(pdfFormFieldMap.get("Laufleistung").getValueAsString().isEmpty())) {
+                fahrzeug.setKmStand(Integer.parseInt(pdfFormFieldMap.get("Laufleistung").getValueAsString()));
+            }
             fahrzeug.setReifenVorne(pdfFormFieldMap.get("Bereifung vorne").getValueAsString());
             fahrzeug.setReifenHinten(pdfFormFieldMap.get("Bereifung hinten").getValueAsString());
             fahrzeug.setReifenHersteller(pdfFormFieldMap.get("Reifenhersteller").getValueAsString());
@@ -234,18 +242,22 @@ public class VehicleDataExtractor implements TextExtractor {
     }
 
     private String formatDate(String time) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        String dateTime = time.replace("/", "-");
-        char[] chars = dateTime.toCharArray();
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < chars.length; i++) {
-            if (Character.isDigit(chars[i]) || chars[i] == '-') {
-                builder.append(chars[i]);
+        if (!time.isEmpty()) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+            String dateTime = time.replace("/", "-");
+            char[] chars = dateTime.toCharArray();
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < chars.length; i++) {
+                if (Character.isDigit(chars[i]) || chars[i] == '-') {
+                    builder.append(chars[i]);
+                }
             }
+            dateTime = builder.toString();
+            LocalDate date = LocalDate.parse(dateTime, formatter);
+            return date.toString();
+        } else {
+            return new String("");
         }
-        dateTime = builder.toString();
-        LocalDate date = LocalDate.parse(dateTime, formatter);
-        return date.toString();
     }
 
     private String formatHsnTsn(String hsn) {

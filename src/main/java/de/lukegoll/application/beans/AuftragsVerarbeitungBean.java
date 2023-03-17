@@ -1,5 +1,9 @@
 package de.lukegoll.application.beans;
 
+import com.itextpdf.forms.PdfAcroForm;
+import com.itextpdf.forms.fields.PdfFormField;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfReader;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.Tag;
@@ -9,6 +13,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import de.lukegoll.application.data.entity.Auftrag;
+import de.lukegoll.application.data.service.AuftragService;
 import de.lukegoll.application.logWriter.LogWriter;
 import de.lukegoll.application.mailService.Mail;
 import de.lukegoll.application.mailService.empfänger.ReceiveMailService;
@@ -26,10 +31,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.context.annotation.ApplicationScope;
 
+import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,7 +54,10 @@ public class AuftragsVerarbeitungBean extends Thread {
 
     private int count = 0;
 
-    public AuftragsVerarbeitungBean(UI ui, AuftragsanlageView view) {
+    AuftragService auftragService;
+
+    public AuftragsVerarbeitungBean(UI ui, AuftragsanlageView view, AuftragService auftragService) {
+        this.auftragService = auftragService;
         this.ui = ui;
         this.view = view;
     }
@@ -59,32 +69,35 @@ public class AuftragsVerarbeitungBean extends Thread {
                 List<String> stringList = new LinkedList<>();
                 try {
 
-                    receiveMailService.login("Entwicklung@gollenstede-entwicklung.de", "" );
+                    receiveMailService.login("Entwicklung@gollenstede-entwicklung.de", "");
                     ListenableFuture<List<Message>> messageFuture = receiveMailService.downloadNewMails();
                     messageFuture.addCallback(
-                            successResult -> view.updateUi(ui, LocalDateTime.now().toString() +" Mails heruntergeladen: " + successResult.size()),
+                            successResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Mails heruntergeladen: " + successResult.size()),
                             failureResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Fehler beim herunterladen der Mails:" + failureResult));
                     if (messageFuture.get().size() > 0) {
                         List<Message> messages = messageFuture.get();
                         ListenableFuture<List<Mail>> mailFuture = receiveMailService.extractAttachments(messages);
                         mailFuture.addCallback(
-                                successResult -> view.updateUi(ui, LocalDateTime.now().toString() +" Dateien aus Mails extrahiert: " + successResult.size()),
-                                failureResult -> view.updateUi(ui, LocalDateTime.now().toString() +" Fehler beim extrahieren der Dateien:" + failureResult));
+                                successResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Dateien aus Mails extrahiert: " + successResult.size()),
+                                failureResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Fehler beim extrahieren der Dateien:" + failureResult));
                         ListenableFuture<List<Auftrag>> auftragFuture = startAuftragsService(mailFuture.get());
                         auftragFuture.addCallback(
-                                successResult -> view.updateUi(ui, LocalDateTime.now().toString() +" Es wurden: " + successResult.size() + " Aufträge erstellt"),
-                                failureResult -> view.updateUi(ui, LocalDateTime.now().toString() +" Fehler beim erstellen der Aufträge: " + failureResult));
+                                successResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Es wurden: " + successResult.size() + " Aufträge erstellt"),
+                                failureResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Fehler beim erstellen der Aufträge: " + failureResult));
                         ListenableFuture<List<String>> xmlFuture = new XMLTranslator().writeXmlRequests(auftragFuture.get());
                         xmlFuture.addCallback(
-                                successResult -> view.updateUi(ui, LocalDateTime.now().toString() +" Es wurden: " + successResult.size() + " XML-Dateien erstellt!"),
-                                failureResult -> view.updateUi(ui, LocalDateTime.now().toString() +" Fehler beim erstellen der XML-Dateien:" + failureResult));
-                        for(int i=0; i<xmlFuture.get().size();i++){
+                                successResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Es wurden: " + successResult.size() + " XML-Dateien erstellt!"),
+                                failureResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Fehler beim erstellen der XML-Dateien:" + failureResult));
+                        for (int i = 0; i < xmlFuture.get().size(); i++) {
                             ListenableFuture<String> restFuture = new Request().httpPost(xmlFuture.get().get(i),
                                     "https://intacc01-api.onrex.de/interfaces/orders", "");
                             restFuture.addCallback(
-                                    successResult -> view.updateUi(ui, LocalDateTime.now().toString() +" Übertragung an Dynarex-Server erfolgreich: " +successResult),
-                                    failureResult -> view.updateUi(ui, LocalDateTime.now().toString() +" Fehler beim übertragen an Dynarex-Server: " + failureResult));
+                                    successResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Übertragung an Dynarex-Server erfolgreich: " + successResult),
+                                    failureResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Fehler beim übertragen an Dynarex-Server: " + failureResult));
                         }
+                        /*for (int i = 0; i < auftragFuture.get().size(); i++) {
+                            auftragService.saveAuftrag(auftragFuture.get().get(i));
+                        }*/
                         //receiveMailService.moveMails(mailFuture.get());
                     }
                 } catch (MessagingException e) {
@@ -127,21 +140,44 @@ public class AuftragsVerarbeitungBean extends Thread {
                     Auftrag auftrag = new Auftrag();
                     if (mail.get(i).getFiles().get(j).getFile().getName().contains("Aufnahmebogen")) {
                         AuftragDataExtractor auftragDataExtractor = new AuftragDataExtractor();
-                        try {
-                            auftrag = ((Auftrag) auftragDataExtractor.extractText(mail.get(i).getFiles().get(j).getFile()));
-                            auftragList.add(
-                                    auftrag
-                            );
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            break;
+                        File file = mail.get(i).getFiles().get(j).getFile();
+                        if (fileHasFormularFields(file)) {
+                            auftrag = auftragDataExtractor.extractTextFromFormular(file);
+                            auftragList.add(auftrag);
+                        } else {
+                            auftrag = ((Auftrag) auftragDataExtractor.extractText(file));
+                            auftragList.add(auftrag);
                         }
                     }
                 }
             }
+
             return AsyncResult.forValue(auftragList);
-        } catch (Exception e) {
+        } catch (IOException e) {
             return AsyncResult.forExecutionException(e);
+        }
+    }
+
+
+    public boolean fileHasFormularFields(File file) {
+        try {
+            PdfReader pdfReader = new PdfReader(file);
+            PdfDocument doc = new PdfDocument(pdfReader);
+            PdfAcroForm pdfAcroForm = PdfAcroForm.getAcroForm(doc, false);
+            if(pdfAcroForm!=null){
+                Map<String, PdfFormField> pdfFormFieldMap = pdfAcroForm.getFormFields();
+                if (pdfFormFieldMap.size() > 50) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }else{
+                return false;
+            }
+
+        } catch (IOException e) {
+            return false;
+
         }
     }
 

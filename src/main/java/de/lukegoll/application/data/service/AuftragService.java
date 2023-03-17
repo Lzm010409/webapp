@@ -3,6 +3,10 @@ package de.lukegoll.application.data.service;
 import java.util.Optional;
 
 import de.lukegoll.application.data.entity.Auftrag;
+import de.lukegoll.application.data.entity.Fahrzeug;
+import de.lukegoll.application.data.entity.persons.Kunde;
+import de.lukegoll.application.data.entity.persons.Rechtsanwalt;
+import de.lukegoll.application.data.entity.persons.Versicherung;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -11,34 +15,44 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuftragService {
 
-    private final AuftragRepository repository;
+    private final AuftragRepository auftragRepository;
 
     public AuftragService(AuftragRepository repository) {
-        this.repository = repository;
+        this.auftragRepository = repository;
+
     }
 
     public Optional<Auftrag> get(Long id) {
-        return repository.findById(id);
+        return auftragRepository.findById(id);
     }
 
     public Auftrag update(Auftrag entity) {
-        return repository.save(entity);
+        return auftragRepository.save(entity);
     }
 
     public void delete(Long id) {
-        repository.deleteById(id);
+        auftragRepository.deleteById(id);
+    }
+
+    public void saveAuftrag(Auftrag auftrag) {
+        if (auftrag == null
+            ) {
+            System.err.println("Fehler");
+            return;
+        }
+        auftragRepository.save(auftrag);
     }
 
     public Page<Auftrag> list(Pageable pageable) {
-        return repository.findAll(pageable);
+        return auftragRepository.findAll(pageable);
     }
 
     public Page<Auftrag> list(Pageable pageable, Specification<Auftrag> filter) {
-        return repository.findAll(filter, pageable);
+        return auftragRepository.findAll(filter, pageable);
     }
 
     public int count() {
-        return (int) repository.count();
+        return (int) auftragRepository.count();
     }
 
 }

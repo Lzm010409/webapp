@@ -36,7 +36,7 @@ public class PersonDataExtractor implements TextExtractor {
 
             PdfReader pdfReader = new PdfReader(file);
             PdfDocument doc = new PdfDocument(pdfReader);
-            PdfAcroForm pdfAcroForm = PdfAcroForm.getAcroForm(doc, true);
+            PdfAcroForm pdfAcroForm = PdfAcroForm.getAcroForm(doc, false);
             Map<String, PdfFormField> pdfFormFieldMap = pdfAcroForm.getFormFields();
             Kunde kunde = buildCustomer(pdfFormFieldMap.get("Anspruchsteller").getValueAsString());
             kunde.setAnrede(pdfFormFieldMap.get("Anrede").getValueAsString());
@@ -210,10 +210,10 @@ public class PersonDataExtractor implements TextExtractor {
         for (int i = 0; i < tempList.size(); i++) {
             char[] chars = tempList.get(i).toCharArray();
             for (int j = 0; j < chars.length; j++) {
-                if (Character.isDigit(chars[i])) {
+                if (Character.isDigit(chars[j])) {
                     counter += 1;
                 }
-                if (Character.isLetter(chars[i])) {
+                if (Character.isLetter(chars[j])) {
                     break;
                 }
             }
