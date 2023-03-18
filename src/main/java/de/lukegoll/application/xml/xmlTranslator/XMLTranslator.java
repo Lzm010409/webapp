@@ -2,6 +2,7 @@ package de.lukegoll.application.xml.xmlTranslator;
 
 import de.lukegoll.application.data.entity.Auftrag;
 import de.lukegoll.application.data.entity.Fahrzeug;
+import de.lukegoll.application.data.entity.persons.Kontakt;
 import de.lukegoll.application.xml.xmlEntities.Case;
 import de.lukegoll.application.xml.xmlEntities.ClaimnetDistribution;
 import de.lukegoll.application.xml.xmlEntities.Document;
@@ -68,108 +69,107 @@ public class XMLTranslator {
     public Participants auftragToParticipants(Auftrag auftrag) {
         Participants participants = new Participants();
         List<Participant> participantsList = new LinkedList<>();
+        try {
+            Object[] kontakts = auftrag.getKontakte().toArray();
+            for (int i = 0; i < kontakts.length; i++) {
+                if (kontakts[i] instanceof Kontakt) {
+                    if (((Kontakt) kontakts[i]).getPersonType() == PersonType.KUNDE) {
+                        Participant kunde = new Participant();
+                        Address kundenAddress = new Address();
+                        Contacts kundenContacts = new Contacts();
+                        List<Contact> contactList = new LinkedList<>();
+                        Contact tel = new Contact();
+                        Contact mail = new Contact();
+                        tel.setValue(((Kontakt) kontakts[i]).getTel());
+                        tel.setName(ContactType.MOBILE.toString());
+                        mail.setValue(((Kontakt) kontakts[i]).getMail());
+                        mail.setName(ContactType.MAIL.toString());
+                        contactList.add(tel);
+                        contactList.add(mail);
+                        kundenContacts.setContact(contactList);
+                        kundenAddress.setStreet(((Kontakt) kontakts[i]).getAdresse());
+                        kundenAddress.setNumber(parseNumber(((Kontakt) kontakts[i]).getAdresse()));
+                        kundenAddress.setPostalcode(((Kontakt) kontakts[i]).getPlz());
+                        kundenAddress.setCity(((Kontakt) kontakts[i]).getStadt());
+                        kundenAddress.setCountry(new Country(CountryCode.DE));
+                        kundenAddress.setContacts(kundenContacts);
+                        kunde.setAddress(kundenAddress);
+                        String type = ParticipantType.CU.toString() + "," + ParticipantType.CL.toString() + "," + ParticipantType.VO.toString();
+                        kunde.setType(type);
+                        kunde.setGender(((Kontakt) kontakts[i]).getAnrede());
+                        kunde.setName1(((Kontakt) kontakts[i]).getvName() + " " + ((Kontakt) kontakts[i]).getnName());
+                        if (((Kontakt) kontakts[i]).getAnrede().equalsIgnoreCase("firma")) {
+                            kunde.setTax_deduction(true
+                            );
+                        }
+                        participantsList.add(kunde);
+                    }
+                    if (((Kontakt) kontakts[i]).getPersonType() == PersonType.VERSICHERUNG) {
+                        Participant versicherung = new Participant();
+                        Address versicherungsAddress = new Address();
+                        Contacts versicherungContacts = new Contacts();
+                        List<Contact> contactList = new LinkedList<>();
+                        Contact tel = new Contact();
+                        Contact mail = new Contact();
+                        tel.setValue(((Kontakt) kontakts[i]).getTel());
+                        tel.setName(ContactType.MOBILE.toString());
+                        mail.setValue(((Kontakt) kontakts[i]).getMail());
+                        mail.setName(ContactType.MAIL.toString());
+                        contactList.add(tel);
+                        contactList.add(mail);
+                        versicherungContacts.setContact(contactList);
+                        versicherungsAddress.setStreet(((Kontakt) kontakts[i]).getAdresse());
+                        versicherungsAddress.setNumber(parseNumber(((Kontakt) kontakts[i]).getAdresse()));
+                        versicherungsAddress.setPostalcode(((Kontakt) kontakts[i]).getPlz());
+                        versicherungsAddress.setCity(((Kontakt) kontakts[i]).getStadt());
+                        versicherungsAddress.setCountry(new Country(CountryCode.DE));
+                        versicherungsAddress.setContacts(versicherungContacts);
+                        versicherung.setAddress(versicherungsAddress);
+                        String type = ParticipantType.IS.name();
+                        versicherung.setType(type);
+                        versicherung.setGender(((Kontakt) kontakts[i]).getAnrede());
+                        versicherung.setName1(((Kontakt) kontakts[i]).getvName() + " " + ((Kontakt) kontakts[i]).getnName());
+                        if (((Kontakt) kontakts[i]).getAnrede().equalsIgnoreCase("firma")) {
+                            versicherung.setTax_deduction(true
+                            );
+                        }
+                        participantsList.add(versicherung);
+                    }
+                    if (((Kontakt) kontakts[i]).getPersonType() == PersonType.RECHTSANWALT) {
+                        Participant rechtsanwalt = new Participant();
+                        Address rechtsanwaltAddress = new Address();
+                        Contacts rechtsanwaltContacts = new Contacts();
+                        List<Contact> contactList = new LinkedList<>();
+                        Contact tel = new Contact();
+                        Contact mail = new Contact();
+                        tel.setValue(((Kontakt) kontakts[i]).getTel());
+                        tel.setName(ContactType.MOBILE.toString());
+                        mail.setValue(((Kontakt) kontakts[i]).getMail());
+                        mail.setName(ContactType.MAIL.toString());
+                        contactList.add(tel);
+                        contactList.add(mail);
+                        rechtsanwaltContacts.setContact(contactList);
+                        rechtsanwaltAddress.setStreet(((Kontakt) kontakts[i]).getAdresse());
+                        rechtsanwaltAddress.setNumber(parseNumber(((Kontakt) kontakts[i]).getAdresse()));
+                        rechtsanwaltAddress.setPostalcode(((Kontakt) kontakts[i]).getPlz());
+                        rechtsanwaltAddress.setCity(((Kontakt) kontakts[i]).getStadt());
+                        rechtsanwaltAddress.setCountry(new Country(CountryCode.DE));
+                        rechtsanwaltAddress.setContacts(rechtsanwaltContacts);
+                        rechtsanwalt.setAddress(rechtsanwaltAddress);
+                        java.lang.String type = ParticipantType.LA.name();
+                        rechtsanwalt.setType(type);
+                        rechtsanwalt.setGender(((Kontakt) kontakts[i]).getAnrede());
+                        rechtsanwalt.setName1(((Kontakt) kontakts[i]).getvName() + " " + ((Kontakt) kontakts[i]).getnName());
+                        if (((Kontakt) kontakts[i]).getAnrede().equalsIgnoreCase("firma")) {
+                            rechtsanwalt.setTax_deduction(true
+                            );
+                        }
+                        participantsList.add(rechtsanwalt);
+                    }
+                }
+            }
+        } catch (Exception e) {
 
-        Contacts versicherungsContacts = new Contacts();
-        Contacts rechtsanwaltsContacts = new Contacts();
-
-        try {
-            Participant kunde = new Participant();
-            Address kundenAddress = new Address();
-            Contacts kundenContacts = new Contacts();
-            List<Contact> contactList = new LinkedList<>();
-            Contact tel = new Contact();
-            Contact mail = new Contact();
-            tel.setValue(auftrag.getKunde().getTel());
-            tel.setName(ContactType.MOBILE.toString());
-            mail.setValue(auftrag.getKunde().getMail());
-            mail.setName(ContactType.MAIL.toString());
-            contactList.add(tel);
-            contactList.add(mail);
-            kundenContacts.setContact(contactList);
-            kundenAddress.setStreet(auftrag.getKunde().getAdresse());
-            kundenAddress.setNumber(parseNumber(auftrag.getKunde().getAdresse()));
-            kundenAddress.setPostalcode(auftrag.getKunde().getPlz());
-            kundenAddress.setCity(auftrag.getKunde().getStadt());
-            kundenAddress.setCountry(new Country(CountryCode.DE));
-            kundenAddress.setContacts(kundenContacts);
-            kunde.setAddress(kundenAddress);
-            String type = ParticipantType.CU.toString() + "," + ParticipantType.CL.toString() + "," + ParticipantType.VO.toString();
-            kunde.setType(type);
-            kunde.setGender(auftrag.getKunde().getAnrede());
-            kunde.setName1(auftrag.getKunde().getvName() + " " + auftrag.getKunde().getnName());
-            if (auftrag.getKunde().getAnrede().equalsIgnoreCase("firma")) {
-                kunde.setTax_deduction(true
-                );
-            }
-            participantsList.add(kunde);
-        } catch (Exception e) {
-            e.getMessage();
-        }
-        try {
-            Participant versicherung = new Participant();
-            Address versicherungsAddress = new Address();
-            Contacts versicherungContacts = new Contacts();
-            List<Contact> contactList = new LinkedList<>();
-            Contact tel = new Contact();
-            Contact mail = new Contact();
-            tel.setValue(auftrag.getVersicherung().getTel());
-            tel.setName(ContactType.MOBILE.toString());
-            mail.setValue(auftrag.getVersicherung().getMail());
-            mail.setName(ContactType.MAIL.toString());
-            contactList.add(tel);
-            contactList.add(mail);
-            versicherungContacts.setContact(contactList);
-            versicherungsAddress.setStreet(auftrag.getVersicherung().getAdresse());
-            versicherungsAddress.setNumber(parseNumber(auftrag.getVersicherung().getAdresse()));
-            versicherungsAddress.setPostalcode(auftrag.getVersicherung().getPlz());
-            versicherungsAddress.setCity(auftrag.getVersicherung().getStadt());
-            versicherungsAddress.setCountry(new Country(CountryCode.DE));
-            versicherungsAddress.setContacts(versicherungContacts);
-            versicherung.setAddress(versicherungsAddress);
-            java.lang.String type = ParticipantType.IS.name();
-            versicherung.setType(type);
-            versicherung.setGender(auftrag.getVersicherung().getAnrede());
-            versicherung.setName1(auftrag.getVersicherung().getvName() + " " + auftrag.getVersicherung().getnName());
-            if (auftrag.getVersicherung().getAnrede().equalsIgnoreCase("firma")) {
-                versicherung.setTax_deduction(true
-                );
-            }
-            participantsList.add(versicherung);
-        } catch (Exception e) {
-            e.getMessage();
-        }
-        try {
-            Participant rechtsanwalt = new Participant();
-            Address rechtsanwaltAddress = new Address();
-            Contacts rechtsanwaltContacts = new Contacts();
-            List<Contact> contactList = new LinkedList<>();
-            Contact tel = new Contact();
-            Contact mail = new Contact();
-            tel.setValue(auftrag.getRechtsanwalt().getTel());
-            tel.setName(ContactType.MOBILE.toString());
-            mail.setValue(auftrag.getRechtsanwalt().getMail());
-            mail.setName(ContactType.MAIL.toString());
-            contactList.add(tel);
-            contactList.add(mail);
-            rechtsanwaltContacts.setContact(contactList);
-            rechtsanwaltAddress.setStreet(auftrag.getRechtsanwalt().getAdresse());
-            rechtsanwaltAddress.setNumber(parseNumber(auftrag.getRechtsanwalt().getAdresse()));
-            rechtsanwaltAddress.setPostalcode(auftrag.getRechtsanwalt().getPlz());
-            rechtsanwaltAddress.setCity(auftrag.getRechtsanwalt().getStadt());
-            rechtsanwaltAddress.setCountry(new Country(CountryCode.DE));
-            rechtsanwaltAddress.setContacts(rechtsanwaltContacts);
-            rechtsanwalt.setAddress(rechtsanwaltAddress);
-            java.lang.String type = ParticipantType.LA.name();
-            rechtsanwalt.setType(type);
-            rechtsanwalt.setGender(auftrag.getRechtsanwalt().getAnrede());
-            rechtsanwalt.setName1(auftrag.getRechtsanwalt().getvName() + " " + auftrag.getRechtsanwalt().getnName());
-            if (auftrag.getRechtsanwalt().getAnrede().equalsIgnoreCase("firma")) {
-                rechtsanwalt.setTax_deduction(true
-                );
-            }
-            participantsList.add(rechtsanwalt);
-        } catch (Exception e) {
-            e.getMessage();
         }
         participants.setParticipant(participantsList);
 

@@ -3,10 +3,6 @@ package de.lukegoll.application.data.service;
 import java.util.Optional;
 
 import de.lukegoll.application.data.entity.Auftrag;
-import de.lukegoll.application.data.entity.Fahrzeug;
-import de.lukegoll.application.data.entity.persons.Kunde;
-import de.lukegoll.application.data.entity.persons.Rechtsanwalt;
-import de.lukegoll.application.data.entity.persons.Versicherung;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;

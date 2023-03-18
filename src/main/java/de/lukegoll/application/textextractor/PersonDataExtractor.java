@@ -11,41 +11,43 @@ import com.itextpdf.kernel.pdf.canvas.parser.listener.FilteredTextEventListener;
 import com.itextpdf.kernel.pdf.canvas.parser.listener.ITextExtractionStrategy;
 import com.itextpdf.kernel.pdf.canvas.parser.listener.LocationTextExtractionStrategy;
 
-import de.lukegoll.application.data.entity.Auftrag;
-import de.lukegoll.application.data.entity.persons.Kunde;
+import de.lukegoll.application.data.entity.persons.Kontakt;
 import de.lukegoll.application.textextractor.coordinates.Coordinates;
 import de.lukegoll.application.xml.xmlEntities.caseData.participantData.Contacts;
 import de.lukegoll.application.xml.xmlEntities.caseData.participantData.Participant;
+import de.lukegoll.application.xml.xmlEntities.constants.PersonType;
 import org.jboss.logging.Logger;
+import org.springframework.data.mapping.model.KotlinDefaultMask;
 
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class PersonDataExtractor implements TextExtractor {
     private final Logger logger = Logger.getLogger(PersonDataExtractor.class);
     private Participant testLawyer = new Participant();
 
-    public Kunde extractTextFromFormular(File file) {
+    public Set<Kontakt> extractTextFromFormular(File file) {
         try {
 
             PdfReader pdfReader = new PdfReader(file);
             PdfDocument doc = new PdfDocument(pdfReader);
             PdfAcroForm pdfAcroForm = PdfAcroForm.getAcroForm(doc, false);
             Map<String, PdfFormField> pdfFormFieldMap = pdfAcroForm.getFormFields();
-            Kunde kunde = buildCustomer(pdfFormFieldMap.get("Anspruchsteller").getValueAsString());
+            Kontakt kunde = buildCustomer(pdfFormFieldMap.get("Anspruchsteller").getValueAsString());
             kunde.setAnrede(pdfFormFieldMap.get("Anrede").getValueAsString());
             kunde.setTel(pdfFormFieldMap.get("Anspruchsteller Telefon").getValueAsString());
             kunde.setMail(pdfFormFieldMap.get("Anspruchsteller Mail").getValueAsString());
+            kunde.setPersonType(PersonType.KUNDE);
+
+            Set<Kontakt> kontakts = new HashSet<>();
+            kontakts.add(kunde);
             logger.log(Logger.Level.INFO, String.format("Folgende Daten wurden ausgelesen: %s, %s %s  Tel.: %s, Mail: %s", kunde.getAnrede(),
                     kunde.getvName(), kunde.getnName(), kunde.getTel(), kunde.getMail()));
 
-            return kunde;
+            return kontakts;
         } catch (FileNotFoundException e) {
             logger.log(Logger.Level.ERROR, "Auslesen nicht erfolgreich, folgender Fehler ist aufgetreten: " + e.getMessage());
             throw new RuntimeException(e);
@@ -56,7 +58,7 @@ public class PersonDataExtractor implements TextExtractor {
     }
 
     @Override
-    public Kunde extractText(File file) throws IOException {
+    public Set<Kontakt> extractText(File file) throws IOException {
         StringBuilder builder = new StringBuilder();
         try {
             Rectangle rect;
@@ -70,23 +72,25 @@ public class PersonDataExtractor implements TextExtractor {
             strategy = new FilteredTextEventListener(new LocationTextExtractionStrategy(), regionFilter);
             str = PdfTextExtractor.getTextFromPage(pdfDoc.getPage(1), strategy);
             builder.append(str + "\t");
-            Kunde kunde = buildCustomer(str);
+            Kontakt kunde = buildCustomer(str);
 
             if (kunde != null) {
                 addGender(kunde, file);
                 addContacts(kunde, file);
             }
+            kunde.setPersonType(PersonType.KUNDE);
             logger.log(Logger.Level.INFO, String.format("Folgende Daten wurden ausgelesen: %s, Geschlecht: %s, Tel.: %s, Mail: %s", builder.toString(), kunde.getAnrede()
                     , kunde.getTel(), kunde.getMail()));
-
-            return kunde;
+            Set<Kontakt> kontakts = new HashSet<>();
+            kontakts.add(kunde);
+            return kontakts;
         } catch (Exception e) {
             logger.log(Logger.Level.ERROR, "Auslesen nicht erfolgreich, folgender Fehler ist aufgetreten: " + e.getMessage());
             return null;
         }
     }
 
-    private void addGender(Kunde kunde, File file) throws IOException {
+    private void addGender(Kontakt kunde, File file) throws IOException {
         Rectangle rect;
         TextRegionEventFilter regionFilter;
         ITextExtractionStrategy strategy;
@@ -99,9 +103,9 @@ public class PersonDataExtractor implements TextExtractor {
         kunde.setAnrede(str);
     }
 
-    private Kunde buildCustomer(String str) {
+    private Kontakt buildCustomer(String str) {
         List<String> list = new LinkedList<>(Arrays.asList(str.split("\n")));
-        Kunde participant = new Kunde();
+        Kontakt participant = new Kontakt();
 
 
         for (int i = 0; i < list.size(); i++) {
@@ -132,7 +136,7 @@ public class PersonDataExtractor implements TextExtractor {
 
     }
 
-    private void setNames(Kunde kunde, String string) {
+    private void setNames(Kontakt kunde, String string) {
         char[] chars = string.toCharArray();
         StringBuilder vnameBuilder = new StringBuilder();
         StringBuilder nnameBuilder = new StringBuilder();
@@ -177,7 +181,7 @@ public class PersonDataExtractor implements TextExtractor {
     }
 
 
-    private void addContacts(Kunde kunde, File file) throws IOException {
+    private void addContacts(Kontakt kunde, File file) throws IOException {
         Rectangle rect;
         TextRegionEventFilter regionFilter;
         ITextExtractionStrategy strategy;

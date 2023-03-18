@@ -1,12 +1,13 @@
 package de.lukegoll.application.data.entity;
 
 
-import de.lukegoll.application.data.entity.persons.Kunde;
-import de.lukegoll.application.data.entity.persons.Rechtsanwalt;
-import de.lukegoll.application.data.entity.persons.Versicherung;
+import de.lukegoll.application.data.entity.persons.Kontakt;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "auftrag")
@@ -16,22 +17,19 @@ public class Auftrag extends AbstractEntity {
     private String schadenOrt;
     private String gutachtenNummer;
     private String Schadennummer;
-    @ManyToOne
-    @JoinColumn(name = "versicherung", nullable = true)
-    private Versicherung versicherung;
     private String kennzeichenUG;
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "kunde", nullable = true, updatable = false, referencedColumnName = "kundenId")
-    @Nullable
-    private Kunde kunde;
     private String besichtigungsort;
     private String bedichtigungsDatum;
     private String besichtigungsUhrzeit;
     private String schadenhergang;
     private String auftragsBesonderheiten;
-    @ManyToOne
-    @JoinColumn(name = "rechtsanwalt", nullable = true)
-    private Rechtsanwalt rechtsanwalt;
+    @ManyToMany
+    @JoinTable(
+            name = "kontakte",
+            joinColumns = {@JoinColumn(name = "kontakt_id")},
+            inverseJoinColumns = {@JoinColumn(name = "auftrag_id")}
+    )
+    private Set<Kontakt> kontakte = new HashSet<Kontakt>();
     @ManyToOne
     @JoinColumn(name = "fahrzeug", nullable = true)
     private Fahrzeug fahrzeug;
@@ -79,13 +77,6 @@ public class Auftrag extends AbstractEntity {
         Schadennummer = schadennummer;
     }
 
-    public Versicherung getVersicherung() {
-        return versicherung;
-    }
-
-    public void setVersicherung(Versicherung versicherung) {
-        this.versicherung = versicherung;
-    }
 
     public String getKennzeichenUG() {
         return kennzeichenUG;
@@ -95,13 +86,6 @@ public class Auftrag extends AbstractEntity {
         this.kennzeichenUG = kennzeichenUG;
     }
 
-    public Kunde getKunde() {
-        return kunde;
-    }
-
-    public void setKunde(Kunde kunde) {
-        this.kunde = kunde;
-    }
 
     public String getBesichtigungsort() {
         return besichtigungsort;
@@ -143,13 +127,6 @@ public class Auftrag extends AbstractEntity {
         this.auftragsBesonderheiten = auftragsBesonderheiten;
     }
 
-    public Rechtsanwalt getRechtsanwalt() {
-        return rechtsanwalt;
-    }
-
-    public void setRechtsanwalt(Rechtsanwalt rechtsanwalt) {
-        this.rechtsanwalt = rechtsanwalt;
-    }
 
     public Fahrzeug getFahrzeug() {
         return fahrzeug;
@@ -157,5 +134,13 @@ public class Auftrag extends AbstractEntity {
 
     public void setFahrzeug(Fahrzeug fahrzeug) {
         this.fahrzeug = fahrzeug;
+    }
+
+    public Set<Kontakt> getKontakte() {
+        return kontakte;
+    }
+
+    public void setKontakte(Set<Kontakt> kontakte) {
+        this.kontakte = kontakte;
     }
 }

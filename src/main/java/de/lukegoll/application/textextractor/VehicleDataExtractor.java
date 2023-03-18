@@ -13,7 +13,6 @@ import com.itextpdf.kernel.pdf.canvas.parser.listener.ITextExtractionStrategy;
 import com.itextpdf.kernel.pdf.canvas.parser.listener.LocationTextExtractionStrategy;
 
 import de.lukegoll.application.data.entity.Fahrzeug;
-import de.lukegoll.application.data.entity.persons.Kunde;
 import de.lukegoll.application.textextractor.coordinates.Coordinates;
 import org.jboss.logging.Logger;
 

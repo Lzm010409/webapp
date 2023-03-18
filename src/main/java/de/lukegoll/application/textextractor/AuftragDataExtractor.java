@@ -11,10 +11,6 @@ import com.itextpdf.kernel.pdf.canvas.parser.listener.FilteredTextEventListener;
 import com.itextpdf.kernel.pdf.canvas.parser.listener.ITextExtractionStrategy;
 import com.itextpdf.kernel.pdf.canvas.parser.listener.LocationTextExtractionStrategy;
 import de.lukegoll.application.data.entity.Auftrag;
-import de.lukegoll.application.data.entity.Fahrzeug;
-import de.lukegoll.application.data.entity.persons.Kunde;
-import de.lukegoll.application.data.entity.persons.Rechtsanwalt;
-import de.lukegoll.application.data.entity.persons.Versicherung;
 import de.lukegoll.application.textextractor.coordinates.Coordinates;
 import org.jboss.logging.Logger;
 
@@ -49,7 +45,7 @@ public class AuftragDataExtractor implements TextExtractor {
             auftrag.setAuftragsBesonderheiten(pdfFormFieldMap.get("Notizen").getValueAsString());
             auftrag.setKennzeichenUG(pdfFormFieldMap.get("Kennzeichen-UG").getValueAsString());
             auftrag.setFahrzeug(new VehicleDataExtractor().extractTextFromFormular(file));
-            auftrag.setKunde(new PersonDataExtractor().extractTextFromFormular(file));
+            auftrag.setKontakte(new PersonDataExtractor().extractTextFromFormular(file));
             return auftrag;
         } catch (IOException e) {
             return null;
@@ -95,10 +91,6 @@ public class AuftragDataExtractor implements TextExtractor {
             regionFilter = new TextRegionEventFilter(rect);
             strategy = new FilteredTextEventListener(new LocationTextExtractionStrategy(), regionFilter);
             str = PdfTextExtractor.getTextFromPage(pdfDoc.getPage(1), strategy);
-            Versicherung versicherung = new Versicherung();
-            builder1.append(str + "\t");
-            versicherung.setnName(str);
-            auftrag.setVersicherung(versicherung);
             rect = new Rectangle(Coordinates.SNUMMER.getX(), Coordinates.SNUMMER.getY(), Coordinates.SNUMMER.getWidth(), Coordinates.SNUMMER.getHeight());
             regionFilter = new TextRegionEventFilter(rect);
             strategy = new FilteredTextEventListener(new LocationTextExtractionStrategy(), regionFilter);
@@ -145,13 +137,10 @@ public class AuftragDataExtractor implements TextExtractor {
             regionFilter = new TextRegionEventFilter(rect);
             strategy = new FilteredTextEventListener(new LocationTextExtractionStrategy(), regionFilter);
             str = PdfTextExtractor.getTextFromPage(pdfDoc.getPage(1), strategy);
-            Rechtsanwalt rechtsanwalt = new Rechtsanwalt();
-            builder1.append(str + "\t");
-            rechtsanwalt.setnName(str);
-            auftrag.setRechtsanwalt(rechtsanwalt);
+
 
             auftrag.setFahrzeug(new VehicleDataExtractor().extractText(file));
-            auftrag.setKunde(new PersonDataExtractor().extractText(file));
+            auftrag.setKontakte(new PersonDataExtractor().extractText(file));
             logger.log(Logger.Level.INFO, String.format("Folgende Daten wurden ausgelesen: %s", builder1.toString()));
         } catch (Exception e) {
             logger.log(Logger.Level.WARN, "Es ist folgender Fehler aufgetreten: " + e.getMessage());

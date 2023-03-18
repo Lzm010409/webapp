@@ -13,7 +13,10 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import de.lukegoll.application.data.entity.Auftrag;
+import de.lukegoll.application.data.entity.persons.Kontakt;
 import de.lukegoll.application.data.service.AuftragService;
+import de.lukegoll.application.data.service.FahrzeugService;
+import de.lukegoll.application.data.service.KontaktService;
 import de.lukegoll.application.logWriter.LogWriter;
 import de.lukegoll.application.mailService.Mail;
 import de.lukegoll.application.mailService.empfänger.ReceiveMailService;
@@ -37,6 +40,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -55,9 +59,13 @@ public class AuftragsVerarbeitungBean extends Thread {
     private int count = 0;
 
     AuftragService auftragService;
+    FahrzeugService fahrzeugService;
+    KontaktService kontaktService;
 
-    public AuftragsVerarbeitungBean(UI ui, AuftragsanlageView view, AuftragService auftragService) {
+    public AuftragsVerarbeitungBean(UI ui, AuftragsanlageView view, AuftragService auftragService, FahrzeugService fahrzeugService, KontaktService kontaktService) {
         this.auftragService = auftragService;
+        this.fahrzeugService = fahrzeugService;
+        this.kontaktService = kontaktService;
         this.ui = ui;
         this.view = view;
     }
@@ -95,9 +103,18 @@ public class AuftragsVerarbeitungBean extends Thread {
                                     successResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Übertragung an Dynarex-Server erfolgreich: " + successResult),
                                     failureResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Fehler beim übertragen an Dynarex-Server: " + failureResult));
                         }
-                        /*for (int i = 0; i < auftragFuture.get().size(); i++) {
-                            auftragService.saveAuftrag(auftragFuture.get().get(i));
-                        }*/
+                        for (int i = 0; i < auftragFuture.get().size(); i++) {
+                            Auftrag auftrag = auftragFuture.get().get(i);
+                            fahrzeugService.saveFahrzeug(auftrag.getFahrzeug());
+                            if (auftrag.getKontakte() instanceof Set<Kontakt>) {
+                                Object[] kontaktArray = auftrag.getKontakte().toArray();
+                                for (int j = 0; j < kontaktArray.length; j++) {
+                                    if (kontaktArray[j] instanceof Kontakt)
+                                        kontaktService.saveKontakt((Kontakt) kontaktArray[j]);
+                                }
+                            }
+                            auftragService.saveAuftrag(auftrag);
+                        }
                         //receiveMailService.moveMails(mailFuture.get());
                     }
                 } catch (MessagingException e) {
@@ -164,14 +181,14 @@ public class AuftragsVerarbeitungBean extends Thread {
             PdfReader pdfReader = new PdfReader(file);
             PdfDocument doc = new PdfDocument(pdfReader);
             PdfAcroForm pdfAcroForm = PdfAcroForm.getAcroForm(doc, false);
-            if(pdfAcroForm!=null){
+            if (pdfAcroForm != null) {
                 Map<String, PdfFormField> pdfFormFieldMap = pdfAcroForm.getFormFields();
                 if (pdfFormFieldMap.size() > 50) {
                     return true;
                 } else {
                     return false;
                 }
-            }else{
+            } else {
                 return false;
             }
 

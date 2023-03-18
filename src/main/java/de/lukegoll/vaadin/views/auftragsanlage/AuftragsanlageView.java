@@ -15,6 +15,8 @@ import com.vaadin.flow.spring.annotation.UIScope;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import de.lukegoll.application.beans.AuftragsVerarbeitungBean;
 import de.lukegoll.application.data.service.AuftragService;
+import de.lukegoll.application.data.service.FahrzeugService;
+import de.lukegoll.application.data.service.KontaktService;
 import de.lukegoll.application.events.LogEvent;
 import de.lukegoll.application.logWriter.LogWriter;
 import de.lukegoll.application.mailService.empfänger.ReceiveMailService;
@@ -47,8 +49,12 @@ public class AuftragsanlageView extends VerticalLayout {
     ProgressBar progressBar = new ProgressBar();
     ReceiveMailService receiveMailService = new ReceiveMailService();
     AuftragService auftragService;
+    FahrzeugService fahrzeugService;
+    KontaktService kontaktService;
 
-    public AuftragsanlageView(AuftragService auftragService) {
+    public AuftragsanlageView(AuftragService auftragService, FahrzeugService fahrzeugService, KontaktService kontaktService) {
+        this.fahrzeugService = fahrzeugService;
+        this.kontaktService = kontaktService;
         this.auftragService = auftragService;
         progressBar.setWidth("15em");
         progressBar.setIndeterminate(true);
@@ -64,7 +70,7 @@ public class AuftragsanlageView extends VerticalLayout {
                 ButtonVariant.LUMO_SUCCESS);
         loggerScreen.add(new Span("Waiting for updates"));
         startButton.addClickListener(buttonClickEvent -> {
-            thread = new AuftragsVerarbeitungBean(buttonClickEvent.getSource().getUI().orElseThrow(), this, this.auftragService);
+            thread = new AuftragsVerarbeitungBean(buttonClickEvent.getSource().getUI().orElseThrow(), this, this.auftragService, this.fahrzeugService, this.kontaktService);
             thread.start();
         });
 
