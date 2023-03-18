@@ -1,8 +1,11 @@
 package de.lukegoll.application.data.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import de.lukegoll.application.data.entity.Auftrag;
+import de.lukegoll.application.data.entity.persons.Kontakt;
+import de.lukegoll.application.xml.xmlEntities.caseData.participantData.Contact;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -32,12 +35,19 @@ public class AuftragService {
 
     public void saveAuftrag(Auftrag auftrag) {
         if (auftrag == null
-            ) {
+        ) {
             System.err.println("Fehler");
             return;
         }
         auftragRepository.save(auftrag);
     }
+
+    public List<Auftrag> findAllAufträge() {
+
+        return auftragRepository.findAll();
+
+    }
+
 
     public Page<Auftrag> list(Pageable pageable) {
         return auftragRepository.findAll(pageable);

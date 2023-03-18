@@ -6,6 +6,7 @@ import de.lukegoll.application.data.entity.persons.Kontakt;
 import javax.annotation.Nullable;
 import javax.persistence.*;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -30,6 +31,9 @@ public class Auftrag extends AbstractEntity {
             inverseJoinColumns = {@JoinColumn(name = "auftrag_id")}
     )
     private Set<Kontakt> kontakte = new HashSet<Kontakt>();
+
+    @Transient
+    private List<Kontakt> kontaktList = new LinkedList<>();
     @ManyToOne
     @JoinColumn(name = "fahrzeug", nullable = true)
     private Fahrzeug fahrzeug;
@@ -141,6 +145,28 @@ public class Auftrag extends AbstractEntity {
     }
 
     public void setKontakte(Set<Kontakt> kontakte) {
+        this.kontaktList = generateKontaktList(kontakte);
         this.kontakte = kontakte;
+    }
+
+    public List<Kontakt> getKontaktList() {
+        return kontaktList;
+    }
+
+    public void setKontaktList(List<Kontakt> kontaktList) {
+        this.kontaktList = kontaktList;
+    }
+
+    private List<Kontakt> generateKontaktList(Set<Kontakt> kontaktSet) {
+        List<Kontakt> kontakts = new LinkedList<>();
+        Object[] objects = kontaktSet.toArray();
+        for (int i = 0; i < objects.length; i++) {
+            if (objects[i] instanceof Kontakt) {
+                kontakts.add(
+                        (Kontakt) objects[i]
+                );
+            }
+        }
+        return kontakts;
     }
 }
