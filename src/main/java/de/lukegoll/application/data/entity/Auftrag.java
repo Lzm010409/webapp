@@ -41,11 +41,11 @@ public class Auftrag extends AbstractEntity {
     public Auftrag() {
     }
 
-    public String getAuftragsDatum() {
+    public  String getAuftragsDatum() {
         return auftragsDatum;
     }
 
-    public void setAuftragsDatum(String auftragsDatum) {
+    public  void setAuftragsDatum(String auftragsDatum) {
         this.auftragsDatum = auftragsDatum;
     }
 
@@ -169,4 +169,5 @@ public class Auftrag extends AbstractEntity {
         }
         return kontakts;
     }
+
 }
