@@ -47,17 +47,40 @@ public class VehicleDataExtractor implements TextExtractor {
             fahrzeug.setErstZulassung(formatDate(pdfFormFieldMap.get("Erste Zulassung").getValueAsString()));
             fahrzeug.setLetztZulassung(formatDate(pdfFormFieldMap.get("Letzte Zulassung").getValueAsString()));
             if (!(pdfFormFieldMap.get("Leistung").getValueAsString().isEmpty())) {
-                fahrzeug.setLeistung(Integer.valueOf(pdfFormFieldMap.get("Leistung").getValueAsString()));
+                try {
+                    System.out.println(pdfFormFieldMap.get("Leistung").getValueAsString());
+                    fahrzeug.setLeistung(Integer.valueOf(pdfFormFieldMap.get("Leistung").getValueAsString()));
+                } catch (Exception e) {
+                    fahrzeug.setLeistung(0);
+                }
             }
             if (!(pdfFormFieldMap.get("Hubraum").getValueAsString().isEmpty())) {
-                fahrzeug.setHubraum(Integer.valueOf(pdfFormFieldMap.get("Hubraum").getValueAsString()));
+                try {
+                    System.out.println(pdfFormFieldMap.get("Hubraum").getValueAsString());
+                    fahrzeug.setHubraum(Integer.valueOf(pdfFormFieldMap.get("Hubraum").getValueAsString()));
+                } catch (Exception e) {
+                    fahrzeug.setHubraum(0);
+                }
+
             }
             fahrzeug.setHu(pdfFormFieldMap.get("HU.1").getValueAsString());
             if (!(pdfFormFieldMap.get("Anzahl Vorbesitzer").getValueAsString().isEmpty())) {
-                fahrzeug.setAnzVorbesitzer(Integer.parseInt(pdfFormFieldMap.get("Anzahl Vorbesitzer").getValueAsString()));
+                try {
+                    System.out.println(pdfFormFieldMap.get("Anzahl Vorbesitzer").getValueAsString());
+                    fahrzeug.setAnzVorbesitzer(Integer.parseInt(pdfFormFieldMap.get("Anzahl Vorbesitzer").getValueAsString()));
+                } catch (Exception e) {
+                    fahrzeug.setAnzVorbesitzer(0);
+                }
+
             }
             if (!(pdfFormFieldMap.get("Laufleistung").getValueAsString().isEmpty())) {
-                fahrzeug.setKmStand(Integer.parseInt(pdfFormFieldMap.get("Laufleistung").getValueAsString()));
+                try {
+                    System.out.println(pdfFormFieldMap.get("Laufleistung").getValueAsString());
+                    fahrzeug.setKmStand(Integer.parseInt(pdfFormFieldMap.get("Laufleistung").getValueAsString()));
+                } catch (Exception e) {
+                    fahrzeug.setKmStand(0);
+                }
+
             }
             fahrzeug.setReifenVorne(pdfFormFieldMap.get("Bereifung vorne").getValueAsString());
             fahrzeug.setReifenHinten(pdfFormFieldMap.get("Bereifung hinten").getValueAsString());

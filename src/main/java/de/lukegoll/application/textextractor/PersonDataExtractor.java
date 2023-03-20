@@ -46,7 +46,20 @@ public class PersonDataExtractor implements TextExtractor {
             kontakts.add(kunde);
             logger.log(Logger.Level.INFO, String.format("Folgende Daten wurden ausgelesen: %s, %s %s  Tel.: %s, Mail: %s", kunde.getAnrede(),
                     kunde.getvName(), kunde.getnName(), kunde.getTel(), kunde.getMail()));
+            /*
+            * Nur testweise eingefügt
+            * */
+            Kontakt rechtsanwalt = new Kontakt();
+            rechtsanwalt.setPersonType(PersonType.RECHTSANWALT);
+            rechtsanwalt.setvName("TEST");
+            rechtsanwalt.setnName("Rechtsanwalt");
+            Kontakt versicherung = new Kontakt();
+            rechtsanwalt.setPersonType(PersonType.VERSICHERUNG);
+            rechtsanwalt.setvName("TEST");
+            rechtsanwalt.setnName("Versicherung");
 
+            kontakts.add(rechtsanwalt);
+            kontakts.add(versicherung);
             return kontakts;
         } catch (FileNotFoundException e) {
             logger.log(Logger.Level.ERROR, "Auslesen nicht erfolgreich, folgender Fehler ist aufgetreten: " + e.getMessage());

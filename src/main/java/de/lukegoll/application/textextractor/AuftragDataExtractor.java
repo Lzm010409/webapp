@@ -35,12 +35,12 @@ public class AuftragDataExtractor implements TextExtractor {
             Map<String, PdfFormField> pdfFormFieldMap = pdfAcroForm.getFormFields();
             Auftrag auftrag = new Auftrag();
             auftrag.setAuftragsDatum(formatDate(pdfFormFieldMap.get("Auftragsdatum").getValueAsString()));
-            auftrag.setBesichtigungsort(pdfFormFieldMap.get("Auftragsdatum").getValueAsString());
+            auftrag.setBesichtigungsort(pdfFormFieldMap.get("Besichtigungsort").getValueAsString());
             auftrag.setSchadenhergang(pdfFormFieldMap.get("Schadenhergang").getValueAsString());
             auftrag.setSchadenDatum(formatDate(pdfFormFieldMap.get("Schadendatum").getValueAsString()));
             auftrag.setSchadenOrt(pdfFormFieldMap.get("Schadenort").getValueAsString());
             auftrag.setGutachtenNummer(pdfFormFieldMap.get("Gutachtennummer").getValueAsString());
-            auftrag.setBedichtigungsDatum(pdfFormFieldMap.get("Besichtigungsdatum").getValueAsString());
+            auftrag.setBesichtigungsDatum(formatDate(pdfFormFieldMap.get("Besichtigungsdatum").getValueAsString()));
             auftrag.setBesichtigungsUhrzeit(pdfFormFieldMap.get("Besichtigungsuhrzeit").getValueAsString());
             auftrag.setAuftragsBesonderheiten(pdfFormFieldMap.get("Notizen").getValueAsString());
             auftrag.setKennzeichenUG(pdfFormFieldMap.get("Kennzeichen-UG").getValueAsString());
@@ -114,7 +114,7 @@ public class AuftragDataExtractor implements TextExtractor {
             strategy = new FilteredTextEventListener(new LocationTextExtractionStrategy(), regionFilter);
             str = PdfTextExtractor.getTextFromPage(pdfDoc.getPage(1), strategy);
             builder1.append(str + "\t");
-            auftrag.setBedichtigungsDatum(formatDate(str));
+            auftrag.setBesichtigungsDatum(formatDate(str));
             rect = new Rectangle(Coordinates.BUHRZEIT.getX(), Coordinates.BUHRZEIT.getY(), Coordinates.BUHRZEIT.getWidth(), Coordinates.BUHRZEIT.getHeight());
             regionFilter = new TextRegionEventFilter(rect);
             strategy = new FilteredTextEventListener(new LocationTextExtractionStrategy(), regionFilter);

@@ -3,7 +3,6 @@ package de.lukegoll.application.data.entity;
 
 import de.lukegoll.application.data.entity.persons.Kontakt;
 
-import javax.annotation.Nullable;
 import javax.persistence.*;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -20,7 +19,7 @@ public class Auftrag extends AbstractEntity {
     private String Schadennummer;
     private String kennzeichenUG;
     private String besichtigungsort;
-    private String bedichtigungsDatum;
+    private String besichtigungsDatum;
     private String besichtigungsUhrzeit;
     private String schadenhergang;
     private String auftragsBesonderheiten;
@@ -99,12 +98,12 @@ public class Auftrag extends AbstractEntity {
         this.besichtigungsort = besichtigungsort;
     }
 
-    public String getBedichtigungsDatum() {
-        return bedichtigungsDatum;
+    public String getBesichtigungsDatum() {
+        return besichtigungsDatum;
     }
 
-    public void setBedichtigungsDatum(String bedichtigungsDatum) {
-        this.bedichtigungsDatum = bedichtigungsDatum;
+    public void setBesichtigungsDatum(String bedichtigungsDatum) {
+        this.besichtigungsDatum = bedichtigungsDatum;
     }
 
     public String getBesichtigungsUhrzeit() {
