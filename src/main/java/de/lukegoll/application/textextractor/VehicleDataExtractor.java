@@ -33,11 +33,6 @@ public class VehicleDataExtractor implements TextExtractor {
             PdfDocument doc = new PdfDocument(pdfReader);
             PdfAcroForm pdfAcroForm = PdfAcroForm.getAcroForm(doc, true);
             Map<String, PdfFormField> pdfFormFieldMap = pdfAcroForm.getFormFields();
-           /* for (String key : pdfFormFieldMap.keySet()) {
-                if (pdfFormFieldMap.get(key).getValueAsString().equalsIgnoreCase("off") || pdfFormFieldMap.get(key).getValueAsString() == "") {
-                    pdfFormFieldMap.remove(key);
-                }
-            }*/
             fahrzeug.setAmtlKennzeichen(pdfFormFieldMap.get("Amtl Kennzeichen").getValueAsString());
             fahrzeug.setFahrzeugArt(pdfFormFieldMap.get("Fahrzeugart").getValueAsString());
             fahrzeug.setHersteller(pdfFormFieldMap.get("Hersteller").getValueAsString());
@@ -50,16 +45,20 @@ public class VehicleDataExtractor implements TextExtractor {
                 try {
                     System.out.println(pdfFormFieldMap.get("Leistung").getValueAsString());
                     fahrzeug.setLeistung(Integer.valueOf(pdfFormFieldMap.get("Leistung").getValueAsString()));
-                } catch (Exception e) {
+                } catch (NumberFormatException e) {
                     fahrzeug.setLeistung(0);
+                    logger.log(Logger.Level.WARN,"Es konnte keine Leistung ausgelesen werden. Die " +
+                            "Leistung wird auf 0 gesetzt.");
                 }
             }
             if (!(pdfFormFieldMap.get("Hubraum").getValueAsString().isEmpty())) {
                 try {
                     System.out.println(pdfFormFieldMap.get("Hubraum").getValueAsString());
                     fahrzeug.setHubraum(Integer.valueOf(pdfFormFieldMap.get("Hubraum").getValueAsString()));
-                } catch (Exception e) {
+                } catch (NumberFormatException e) {
                     fahrzeug.setHubraum(0);
+                    logger.log(Logger.Level.WARN,"Es konnte kein Hubraum ausgelesen werden. Der " +
+                            "Hubraum wird auf 0 gesetzt.");
                 }
 
             }
@@ -68,8 +67,10 @@ public class VehicleDataExtractor implements TextExtractor {
                 try {
                     System.out.println(pdfFormFieldMap.get("Anzahl Vorbesitzer").getValueAsString());
                     fahrzeug.setAnzVorbesitzer(Integer.parseInt(pdfFormFieldMap.get("Anzahl Vorbesitzer").getValueAsString()));
-                } catch (Exception e) {
+                } catch (NumberFormatException e) {
                     fahrzeug.setAnzVorbesitzer(0);
+                    logger.log(Logger.Level.WARN,"Es konnte keine Anzahl der Vorbesitzer ausgelesen werden. Die " +
+                            "Anzahl der Vorbesitzer wird auf 0 gesetzt.");
                 }
 
             }
@@ -77,8 +78,10 @@ public class VehicleDataExtractor implements TextExtractor {
                 try {
                     System.out.println(pdfFormFieldMap.get("Laufleistung").getValueAsString());
                     fahrzeug.setKmStand(Integer.parseInt(pdfFormFieldMap.get("Laufleistung").getValueAsString()));
-                } catch (Exception e) {
+                } catch (NumberFormatException e) {
                     fahrzeug.setKmStand(0);
+                    logger.log(Logger.Level.WARN,"Es konnte keine Laufleistung ausgelesen werden. Die " +
+                            "Laufleistung wird auf 0 gesetzt.");
                 }
 
             }
