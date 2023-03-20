@@ -14,6 +14,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import de.lukegoll.application.data.entity.Auftrag;
 import de.lukegoll.application.data.entity.persons.Kontakt;
+import de.lukegoll.application.data.enums.AuftragStatus;
 import de.lukegoll.application.data.service.AuftragService;
 import de.lukegoll.application.data.service.FahrzeugService;
 import de.lukegoll.application.data.service.KontaktService;
@@ -76,7 +77,6 @@ public class AuftragsVerarbeitungBean extends Thread {
             if (run.compareAndSet(false, true)) {
                 List<String> stringList = new LinkedList<>();
                 try {
-
                     receiveMailService.login("Entwicklung@gollenstede-entwicklung.de", "");
                     ListenableFuture<List<Message>> messageFuture = receiveMailService.downloadNewMails();
                     messageFuture.addCallback(
@@ -92,12 +92,8 @@ public class AuftragsVerarbeitungBean extends Thread {
                         auftragFuture.addCallback(
                                 successResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Es wurden: " + successResult.size() + " Aufträge erstellt"),
                                 failureResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Fehler beim erstellen der Aufträge: " + failureResult));
-                        ListenableFuture<List<String>> xmlFuture = new XMLTranslator().writeXmlRequests(auftragFuture.get());
-                        xmlFuture.addCallback(
-                                successResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Es wurden: " + successResult.size() + " XML-Dateien erstellt!"),
-                                failureResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Fehler beim erstellen der XML-Dateien:" + failureResult));
-                        for (int i = 0; i < xmlFuture.get().size(); i++) {
-                            ListenableFuture<String> restFuture = new Request().httpPost(xmlFuture.get().get(i),
+                        for (int i = 0; i < auftragFuture.get().size(); i++) {
+                            ListenableFuture<String> restFuture = new Request().httpPost(auftragFuture.get().get(i),
                                     "https://intacc01-api.onrex.de/interfaces/orders", "");
                             restFuture.addCallback(
                                     successResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Übertragung an Dynarex-Server erfolgreich: " + successResult),
@@ -114,6 +110,8 @@ public class AuftragsVerarbeitungBean extends Thread {
                                 }
                             }
                             auftragService.saveAuftrag(auftrag);
+                            auftrag.setAuftragStatus(AuftragStatus.VERARBEITET);
+                            auftragService.update(auftrag);
                         }
                         //receiveMailService.moveMails(mailFuture.get());
                     }

@@ -2,6 +2,7 @@ package de.lukegoll.application.data.entity;
 
 
 import de.lukegoll.application.data.entity.persons.Kontakt;
+import de.lukegoll.application.data.enums.AuftragStatus;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -23,6 +24,8 @@ public class Auftrag extends AbstractEntity {
     private String besichtigungsUhrzeit;
     private String schadenhergang;
     private String auftragsBesonderheiten;
+
+    private AuftragStatus auftragStatus;
     @ManyToMany
     @JoinTable(
             name = "kontakte",
@@ -38,6 +41,7 @@ public class Auftrag extends AbstractEntity {
     private Fahrzeug fahrzeug;
 
     public Auftrag() {
+        auftragStatus = AuftragStatus.OFFEN;
     }
 
     public  String getAuftragsDatum() {
@@ -154,6 +158,14 @@ public class Auftrag extends AbstractEntity {
 
     public void setKontaktList(List<Kontakt> kontaktList) {
         this.kontaktList = kontaktList;
+    }
+
+    public AuftragStatus getAuftragStatus() {
+        return auftragStatus;
+    }
+
+    public void setAuftragStatus(AuftragStatus auftragStatus) {
+        this.auftragStatus = auftragStatus;
     }
 
     private List<Kontakt> generateKontaktList(Set<Kontakt> kontaktSet) {

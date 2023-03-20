@@ -57,7 +57,6 @@ public class PersonDataExtractor implements TextExtractor {
             rechtsanwalt.setPersonType(PersonType.VERSICHERUNG);
             rechtsanwalt.setvName("TEST");
             rechtsanwalt.setnName("Versicherung");
-
             kontakts.add(rechtsanwalt);
             kontakts.add(versicherung);
             return kontakts;

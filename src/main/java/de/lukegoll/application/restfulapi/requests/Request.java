@@ -1,5 +1,8 @@
 package de.lukegoll.application.restfulapi.requests;
 
+import de.lukegoll.application.data.entity.Auftrag;
+import de.lukegoll.application.data.enums.AuftragStatus;
+import de.lukegoll.application.xml.xmlTranslator.XMLTranslator;
 import org.apache.hc.client5.http.classic.methods.HttpDelete;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
@@ -18,10 +21,10 @@ import java.io.*;
 
 public class Request {
     @Async
-    public ListenableFuture<String> httpPost(String XmlFile, String URL, String TOKEN) {
+    public ListenableFuture<String> httpPost(Auftrag auftrag, String URL, String TOKEN) {
         CloseableHttpClient httpclient = HttpClients.createDefault();
         StringEntity requestEntity = new StringEntity(
-                ladeDatei(XmlFile),
+                new XMLTranslator().writeXmlRequest(auftrag),
                 ContentType.APPLICATION_XML
         );
         HttpPost httpPost = new HttpPost(URL);
@@ -35,8 +38,8 @@ public class Request {
             String output = bufferedReader.readLine();
             httpclient.close();
             return AsyncResult.forValue(output);
-
         } catch (IOException e) {
+            auftrag.setAuftragStatus(AuftragStatus.RESTFEHLER);
             return AsyncResult.forExecutionException(e);
         }
     }

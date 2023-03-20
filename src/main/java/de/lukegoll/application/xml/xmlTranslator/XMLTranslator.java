@@ -3,6 +3,7 @@ package de.lukegoll.application.xml.xmlTranslator;
 import de.lukegoll.application.data.entity.Auftrag;
 import de.lukegoll.application.data.entity.Fahrzeug;
 import de.lukegoll.application.data.entity.persons.Kontakt;
+import de.lukegoll.application.data.enums.AuftragStatus;
 import de.lukegoll.application.xml.xmlEntities.Case;
 import de.lukegoll.application.xml.xmlEntities.ClaimnetDistribution;
 import de.lukegoll.application.xml.xmlEntities.Document;
@@ -237,38 +238,42 @@ public class XMLTranslator {
     }
 
     @Async
-    public ListenableFuture<List<String>> writeXmlRequests(List<Auftrag> auftrag) {
-        List<String> xmlList = new LinkedList<>();
+    public String writeXmlRequest(Auftrag auftrag) {
         try {
-            for (Auftrag auftrag1 : auftrag) {
-                String filePath = "src/main/resources/xmlFiles/" + generateRandomString() + ".xml";
-                Document document = new Document();
-                Case fall = new Case();
-                fall.setAdmin_data(auftragToAdminData(auftrag1));
-                fall.setVehicle(auftragToVehicle(auftrag1));
-                fall.setParticipants(auftragToParticipants(auftrag1));
-                fall.setClaimnetInfo(auftragToClaimnetInfo(auftrag1));
-                document.setClaimnetDistribution(buildClaimentDistribution("TEERETS"));
-                document.setFall(fall);
-                LocalDateTime localDateTime = LocalDateTime.now();
-                document.setDate(localDateTime);
-                try {
-                    JAXBContext jc = JAXBContext.newInstance(Document.class);
-                    Marshaller marshaller = jc.createMarshaller();
-                    marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-                    marshaller.marshal(document, new FileOutputStream(filePath));
-                    xmlList.add(filePath);
-                } catch (JAXBException e) {
-                    throw new RuntimeException(e);
-                }
+            String xmlString;
+            String filePath = "src/main/resources/xmlFiles/" + generateRandomString() + ".xml";
+            Document document = new Document();
+            Case fall = new Case();
+            fall.setAdmin_data(auftragToAdminData(auftrag));
+            fall.setVehicle(auftragToVehicle(auftrag));
+            fall.setParticipants(auftragToParticipants(auftrag));
+            fall.setClaimnetInfo(auftragToClaimnetInfo(auftrag));
+            document.setClaimnetDistribution(buildClaimentDistribution("TEERETS"));
+            document.setFall(fall);
+            LocalDateTime localDateTime = LocalDateTime.now();
+            document.setDate(localDateTime);
+            try {
+                JAXBContext jc = JAXBContext.newInstance(Document.class);
+                Marshaller marshaller = jc.createMarshaller();
+                marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+                //marshaller.marshal(document, new FileOutputStream(filePath));
+                StringWriter sw = new StringWriter();
+                marshaller.marshal(document, sw);
+                xmlString = sw.toString();
+                return xmlString;
+
+                //xmlList.add(filePath);
+            } catch (JAXBException e) {
+                auftrag.setAuftragStatus(AuftragStatus.XMLFEHLER);
+                throw new RuntimeException();
             }
-            return AsyncResult.forValue(xmlList);
         } catch (Exception e) {
-            return AsyncResult.forExecutionException(e);
+            auftrag.setAuftragStatus(AuftragStatus.XMLFEHLER);
+            throw new RuntimeException();
         }
 
-
     }
+
 
     public String generateRandomString() {
         int leftLimit = 48; // numeral '0'
@@ -284,4 +289,5 @@ public class XMLTranslator {
 
         return generatedString;
     }
+
 }

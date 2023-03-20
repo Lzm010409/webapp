@@ -11,6 +11,7 @@ import com.itextpdf.kernel.pdf.canvas.parser.listener.FilteredTextEventListener;
 import com.itextpdf.kernel.pdf.canvas.parser.listener.ITextExtractionStrategy;
 import com.itextpdf.kernel.pdf.canvas.parser.listener.LocationTextExtractionStrategy;
 import de.lukegoll.application.data.entity.Auftrag;
+import de.lukegoll.application.data.enums.AuftragStatus;
 import de.lukegoll.application.textextractor.coordinates.Coordinates;
 import org.jboss.logging.Logger;
 
@@ -34,6 +35,7 @@ public class AuftragDataExtractor implements TextExtractor {
             PdfAcroForm pdfAcroForm = PdfAcroForm.getAcroForm(doc, true);
             Map<String, PdfFormField> pdfFormFieldMap = pdfAcroForm.getFormFields();
             Auftrag auftrag = new Auftrag();
+            auftrag.setAuftragStatus(AuftragStatus.INBEARBEITUNG);
             auftrag.setAuftragsDatum(formatDate(pdfFormFieldMap.get("Auftragsdatum").getValueAsString()));
             auftrag.setBesichtigungsort(pdfFormFieldMap.get("Besichtigungsort").getValueAsString());
             auftrag.setSchadenhergang(pdfFormFieldMap.get("Schadenhergang").getValueAsString());
@@ -44,14 +46,23 @@ public class AuftragDataExtractor implements TextExtractor {
             auftrag.setBesichtigungsUhrzeit(pdfFormFieldMap.get("Besichtigungsuhrzeit").getValueAsString());
             auftrag.setAuftragsBesonderheiten(pdfFormFieldMap.get("Notizen").getValueAsString());
             auftrag.setKennzeichenUG(pdfFormFieldMap.get("Kennzeichen-UG").getValueAsString());
-            auftrag.setFahrzeug(new VehicleDataExtractor().extractTextFromFormular(file));
-            auftrag.setKontakte(new PersonDataExtractor().extractTextFromFormular(file));
+            try {
+                auftrag.setFahrzeug(new VehicleDataExtractor().extractTextFromFormular(file));
+            } catch (IllegalStateException e) {
+                auftrag.setAuftragStatus(AuftragStatus.VERARBEITUNGSFEHLER);
+            }
+            try {
+                auftrag.setKontakte(new PersonDataExtractor().extractTextFromFormular(file));
+            } catch (RuntimeException e) {
+                auftrag.setAuftragStatus(AuftragStatus.VERARBEITUNGSFEHLER);
+            }
             return auftrag;
         } catch (IOException e) {
             return null;
 
         }
     }
+
     @Override
     public Object extractText(File file) throws IOException {
         Rectangle rect;

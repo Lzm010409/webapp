@@ -49,6 +49,7 @@ public class VehicleDataExtractor implements TextExtractor {
                     fahrzeug.setLeistung(0);
                     logger.log(Logger.Level.WARN,"Es konnte keine Leistung ausgelesen werden. Die " +
                             "Leistung wird auf 0 gesetzt.");
+                    throw new IllegalStateException();
                 }
             }
             if (!(pdfFormFieldMap.get("Hubraum").getValueAsString().isEmpty())) {
@@ -59,6 +60,7 @@ public class VehicleDataExtractor implements TextExtractor {
                     fahrzeug.setHubraum(0);
                     logger.log(Logger.Level.WARN,"Es konnte kein Hubraum ausgelesen werden. Der " +
                             "Hubraum wird auf 0 gesetzt.");
+                    throw new IllegalStateException();
                 }
 
             }
@@ -71,6 +73,7 @@ public class VehicleDataExtractor implements TextExtractor {
                     fahrzeug.setAnzVorbesitzer(0);
                     logger.log(Logger.Level.WARN,"Es konnte keine Anzahl der Vorbesitzer ausgelesen werden. Die " +
                             "Anzahl der Vorbesitzer wird auf 0 gesetzt.");
+                    throw new IllegalStateException();
                 }
 
             }
@@ -82,6 +85,7 @@ public class VehicleDataExtractor implements TextExtractor {
                     fahrzeug.setKmStand(0);
                     logger.log(Logger.Level.WARN,"Es konnte keine Laufleistung ausgelesen werden. Die " +
                             "Laufleistung wird auf 0 gesetzt.");
+                    throw new IllegalStateException();
                 }
 
             }
@@ -92,7 +96,7 @@ public class VehicleDataExtractor implements TextExtractor {
             fahrzeug.setSchadstoffKlasse(pdfFormFieldMap.get("Schadstoffklasse").getValueAsString());
             return fahrzeug;
         } catch (Exception e) {
-            return null;
+            throw new IllegalStateException();
         }
     }
 
