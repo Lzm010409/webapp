@@ -1,5 +1,6 @@
 package de.lukegoll.vaadin.views.auftragsdetails;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
@@ -128,7 +129,7 @@ public class AuftragsdetailsView extends FormLayout {
         saveButton.addClickListener(buttonClickEvent -> validateAndSave());
         deleteButton.addClickListener(buttonClickEvent -> fireEvent(new DeleteEvent(this, auftragsDetailsBinder.getBean(), fahrzeugBinder.getBean())));
         cancelButton.addClickListener(buttonClickEvent -> fireEvent(new CloseEvent(this)));
-
+        resendButton.addClickListener(buttonClickEvent -> fireEvent(new ResendEvent(this, auftragsDetailsBinder.getBean(), fahrzeugBinder.getBean())));
         auftragsDetailsBinder.addStatusChangeListener(statusChangeEvent -> saveButton.setEnabled(auftragsDetailsBinder.isValid()));
         fahrzeugBinder.addStatusChangeListener(statusChangeEvent -> saveButton.setEnabled(fahrzeugBinder.isValid()));
 
@@ -398,6 +399,11 @@ public class AuftragsdetailsView extends FormLayout {
             super(source, null, null);
         }
     }
+    public static class ResendEvent extends AuftragsDetailsEvent {
+        ResendEvent(AuftragsdetailsView source, Auftrag auftrag, Fahrzeug fahrzeug) {
+            super(source, auftrag, fahrzeug);
+        }
+    }
 
     public Registration addDeleteListener(ComponentEventListener<DeleteEvent> listener) {
         return addListener(DeleteEvent.class, listener);
@@ -409,5 +415,9 @@ public class AuftragsdetailsView extends FormLayout {
 
     public Registration addCloseListener(ComponentEventListener<CloseEvent> listener) {
         return addListener(CloseEvent.class, listener);
+    }
+
+    public Registration addResendListener(ComponentEventListener<ResendEvent> listener) {
+        return addListener(ResendEvent.class, listener);
     }
 }

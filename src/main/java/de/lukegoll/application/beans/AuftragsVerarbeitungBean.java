@@ -72,6 +72,7 @@ public class AuftragsVerarbeitungBean extends Thread {
     }
 
 
+
     public void run() {
         while (isAlive) {
             if (run.compareAndSet(false, true)) {
@@ -129,6 +130,7 @@ public class AuftragsVerarbeitungBean extends Thread {
             }
         }
     }
+
 
     public boolean getAlive() {
         return isAlive;

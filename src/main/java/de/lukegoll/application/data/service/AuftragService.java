@@ -48,6 +48,16 @@ public class AuftragService {
 
     }
 
+    public List<Auftrag> findAllAufträge(String filterValue) {
+        if (filterValue == null) {
+            return auftragRepository.findAll();
+        } else {
+            return auftragRepository.search(filterValue);
+        }
+
+
+    }
+
 
     public Page<Auftrag> list(Pageable pageable) {
         return auftragRepository.findAll(pageable);
