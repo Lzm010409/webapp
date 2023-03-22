@@ -32,7 +32,7 @@ public class Auftrag extends AbstractEntity {
             joinColumns = {@JoinColumn(name = "kontakt_id")},
             inverseJoinColumns = {@JoinColumn(name = "auftrag_id")}
     )
-    private Set<Kontakt> kontakte = new HashSet<Kontakt>();
+    private Set<Kontakt> kontakte = new HashSet<>();
 
     @Transient
     private List<Kontakt> kontaktList = new LinkedList<>();
@@ -148,7 +148,6 @@ public class Auftrag extends AbstractEntity {
     }
 
     public void setKontakte(Set<Kontakt> kontakte) {
-        this.kontaktList = generateKontaktList(kontakte);
         this.kontakte = kontakte;
     }
 

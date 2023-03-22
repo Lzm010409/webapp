@@ -14,6 +14,7 @@ import de.lukegoll.vaadin.views.auftragsübersicht.AuftragsübersichtView;
 import org.springframework.util.concurrent.ListenableFuture;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 public class ReprocessBean {

@@ -47,7 +47,50 @@ public class Kontakt {
 
     }
 
+    public Kunde convertToKunde(Kontakt kontakt){
+        Kunde kunde = new Kunde();
+        kunde.setId(kontakt.getId());
+        kunde.setvName(kontakt.getvName());
+        kunde.setnName(kontakt.getnName());
+        kunde.setAnrede(kontakt.getAnrede());
+        kunde.setAdresse(kontakt.getAdresse());
+        kunde.setPlz(kontakt.getPlz());
+        kunde.setStadt(kontakt.getStadt());
+        kunde.setTel(kontakt.getTel());
+        kunde.setMail(kontakt.getMail());
+        kunde.setAuftragList(kontakt.getAuftragList());
+        return kunde;
+    }
 
+    public Rechtsanwalt convertToRechtsanwalt(Kontakt kontakt){
+        Rechtsanwalt rechtsanwalt = new Rechtsanwalt();
+        rechtsanwalt.setId(kontakt.getId());
+        rechtsanwalt.setvName(kontakt.getvName());
+        rechtsanwalt.setnName(kontakt.getnName());
+        rechtsanwalt.setAnrede(kontakt.getAnrede());
+        rechtsanwalt.setAdresse(kontakt.getAdresse());
+        rechtsanwalt.setPlz(kontakt.getPlz());
+        rechtsanwalt.setStadt(kontakt.getStadt());
+        rechtsanwalt.setTel(kontakt.getTel());
+        rechtsanwalt.setMail(kontakt.getMail());
+        rechtsanwalt.setAuftragList(kontakt.getAuftragList());
+        return rechtsanwalt;
+    }
+
+    public Versicherung convertToVersicherung(Kontakt kontakt){
+        Versicherung versicherung = new Versicherung();
+        versicherung.setId(kontakt.getId());
+        versicherung.setvName(kontakt.getvName());
+        versicherung.setnName(kontakt.getnName());
+        versicherung.setAnrede(kontakt.getAnrede());
+        versicherung.setAdresse(kontakt.getAdresse());
+        versicherung.setPlz(kontakt.getPlz());
+        versicherung.setStadt(kontakt.getStadt());
+        versicherung.setTel(kontakt.getTel());
+        versicherung.setMail(kontakt.getMail());
+        versicherung.setAuftragList(kontakt.getAuftragList());
+        return versicherung;
+    }
     public String getAdresse() {
         return adresse;
     }
