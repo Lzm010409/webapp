@@ -11,54 +11,85 @@ import com.itextpdf.kernel.pdf.canvas.parser.listener.FilteredTextEventListener;
 import com.itextpdf.kernel.pdf.canvas.parser.listener.ITextExtractionStrategy;
 import com.itextpdf.kernel.pdf.canvas.parser.listener.LocationTextExtractionStrategy;
 
+import de.lukegoll.application.beans.KontaktBean;
 import de.lukegoll.application.data.entity.persons.Kontakt;
 import de.lukegoll.application.textextractor.coordinates.Coordinates;
 import de.lukegoll.application.xml.xmlEntities.caseData.participantData.Contacts;
 import de.lukegoll.application.xml.xmlEntities.caseData.participantData.Participant;
 import de.lukegoll.application.xml.xmlEntities.constants.PersonType;
 import org.jboss.logging.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mapping.model.KotlinDefaultMask;
+import org.springframework.stereotype.Component;
 
 
+import javax.validation.constraints.Null;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
+@Component
 public class PersonDataExtractor implements TextExtractor {
     private final Logger logger = Logger.getLogger(PersonDataExtractor.class);
     private Participant testLawyer = new Participant();
+    private KontaktBean kontaktBean;
+
+    @Autowired
+    public PersonDataExtractor(KontaktBean kontaktBean) {
+        this.kontaktBean = kontaktBean;
+    }
 
     public Set<Kontakt> extractTextFromFormular(File file) {
         try {
-
             PdfReader pdfReader = new PdfReader(file);
             PdfDocument doc = new PdfDocument(pdfReader);
             PdfAcroForm pdfAcroForm = PdfAcroForm.getAcroForm(doc, false);
             Map<String, PdfFormField> pdfFormFieldMap = pdfAcroForm.getFormFields();
+            Set<Kontakt> kontakts = new HashSet<>();
             Kontakt kunde = buildCustomer(pdfFormFieldMap.get("Anspruchsteller").getValueAsString());
             kunde.setAnrede(pdfFormFieldMap.get("Anrede").getValueAsString());
             kunde.setTel(pdfFormFieldMap.get("Anspruchsteller Telefon").getValueAsString());
             kunde.setMail(pdfFormFieldMap.get("Anspruchsteller Mail").getValueAsString());
             kunde.setPersonType(PersonType.KUNDE);
+            try {
+                Kontakt kontakt = kontaktBean.fetchKunde(kunde.getvName(), kunde.getnName());
+                if (kontakt != null) {
+                    kunde = kontakt;
+                }
 
-            Set<Kontakt> kontakts = new HashSet<>();
+            } catch (NullPointerException e) {
+            }
             kontakts.add(kunde);
+            try {
+                Kontakt versicherung = kontaktBean.fetchVersicherung(pdfFormFieldMap.get("Versicherung").getValueAsString(), null);
+                if (versicherung != null) {
+                    kontakts.add(versicherung);
+                } else {
+                    versicherung = new Kontakt();
+                    versicherung.setvName(pdfFormFieldMap.get("Versicherung").getValueAsString());
+                    kontakts.add(versicherung);
+                }
+
+            } catch (NullPointerException e) {
+
+            }
+            try {
+                Kontakt rechtsanwalt = kontaktBean.fetchVersicherung(pdfFormFieldMap.get("Rechtsanwalt").getValueAsString(), null);
+                if (rechtsanwalt != null) {
+                    kontakts.add(rechtsanwalt);
+                } else {
+                    rechtsanwalt = new Kontakt();
+                    rechtsanwalt.setvName(pdfFormFieldMap.get("Rechtsanwalt").getValueAsString());
+                    kontakts.add(rechtsanwalt);
+                }
+
+            } catch (NullPointerException e) {
+
+            }
             logger.log(Logger.Level.INFO, String.format("Folgende Daten wurden ausgelesen: %s, %s %s  Tel.: %s, Mail: %s", kunde.getAnrede(),
                     kunde.getvName(), kunde.getnName(), kunde.getTel(), kunde.getMail()));
-            /*
-            * Nur testweise eingefügt
-            * */
-            Kontakt rechtsanwalt = new Kontakt();
-            rechtsanwalt.setPersonType(PersonType.RECHTSANWALT);
-            rechtsanwalt.setvName("TEST");
-            rechtsanwalt.setnName("Rechtsanwalt");
-            kontakts.add(rechtsanwalt);
-            Kontakt versicherung = new Kontakt();
-            versicherung.setPersonType(PersonType.VERSICHERUNG);
-            versicherung.setvName("TEST");
-            versicherung.setnName("Versicherung");
-            kontakts.add(versicherung);
+
             return kontakts;
         } catch (FileNotFoundException e) {
             logger.log(Logger.Level.ERROR, "Auslesen nicht erfolgreich, folgender Fehler ist aufgetreten: " + e.getMessage());

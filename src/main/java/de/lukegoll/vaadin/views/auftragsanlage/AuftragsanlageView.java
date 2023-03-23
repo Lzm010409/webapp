@@ -76,12 +76,12 @@ public class AuftragsanlageView extends VerticalLayout {
     }
 
     private void startThread(UI ui, AuftragsanlageView auftragsanlageView) {
-        thread = new AuftragsVerarbeitungBean(ui, auftragsanlageView, this.auftragService, this.fahrzeugService, this.kontaktService);
+        this.thread = new AuftragsVerarbeitungBean(ui, auftragsanlageView, this.auftragService, this.fahrzeugService, this.kontaktService);
+        this.thread.start();
         stopButton.addClickListener(buttonClickEvent -> {
-            thread.interrupt();
-            thread = null;
+            this.thread.interrupt();
+            this.thread = null;
         });
-        thread.start();
     }
 
     public void updateUi(UI ui, String result) {

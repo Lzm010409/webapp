@@ -10,10 +10,15 @@ import com.itextpdf.kernel.pdf.canvas.parser.filter.TextRegionEventFilter;
 import com.itextpdf.kernel.pdf.canvas.parser.listener.FilteredTextEventListener;
 import com.itextpdf.kernel.pdf.canvas.parser.listener.ITextExtractionStrategy;
 import com.itextpdf.kernel.pdf.canvas.parser.listener.LocationTextExtractionStrategy;
+import de.lukegoll.application.beans.KontaktBean;
 import de.lukegoll.application.data.entity.Auftrag;
 import de.lukegoll.application.data.enums.AuftragStatus;
+import de.lukegoll.application.data.service.AuftragService;
+import de.lukegoll.application.data.service.FahrzeugService;
+import de.lukegoll.application.data.service.KontaktService;
 import de.lukegoll.application.textextractor.coordinates.Coordinates;
 import org.jboss.logging.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 import java.io.File;
@@ -24,9 +29,18 @@ import java.util.Map;
 
 
 public class AuftragDataExtractor implements TextExtractor {
-
-
     private final Logger logger = Logger.getLogger(AuftragDataExtractor.class);
+
+    AuftragService auftragService;
+    FahrzeugService fahrzeugService;
+    KontaktService kontaktService;
+
+    @Autowired
+    public AuftragDataExtractor(AuftragService auftragService, FahrzeugService fahrzeugService, KontaktService kontaktService) {
+        this.auftragService = auftragService;
+        this.fahrzeugService = fahrzeugService;
+        this.kontaktService = kontaktService;
+    }
 
     public Auftrag extractTextFromFormular(File file) {
         try {
@@ -52,7 +66,7 @@ public class AuftragDataExtractor implements TextExtractor {
                 auftrag.setAuftragStatus(AuftragStatus.VERARBEITUNGSFEHLER);
             }
             try {
-                auftrag.setKontakte(new PersonDataExtractor().extractTextFromFormular(file));
+                auftrag.setKontakte(new PersonDataExtractor(new KontaktBean(kontaktService)).extractTextFromFormular(file));
             } catch (RuntimeException e) {
                 auftrag.setAuftragStatus(AuftragStatus.VERARBEITUNGSFEHLER);
             }
@@ -151,7 +165,7 @@ public class AuftragDataExtractor implements TextExtractor {
 
 
             auftrag.setFahrzeug(new VehicleDataExtractor().extractText(file));
-            auftrag.setKontakte(new PersonDataExtractor().extractText(file));
+            auftrag.setKontakte(new PersonDataExtractor(new KontaktBean(kontaktService)).extractText(file));
             logger.log(Logger.Level.INFO, String.format("Folgende Daten wurden ausgelesen: %s", builder1.toString()));
         } catch (Exception e) {
             logger.log(Logger.Level.WARN, "Es ist folgender Fehler aufgetreten: " + e.getMessage());
@@ -185,7 +199,5 @@ public class AuftragDataExtractor implements TextExtractor {
      */
 
     public static void main(String[] args) throws IOException {
-        AuftragDataExtractor personDataExtractor = new AuftragDataExtractor();
-        personDataExtractor.extractTextFromFormular(new File("/Users/lukegollenstede/Desktop/TEST/Aufnahmebogen Kfz-SAchverständigenbürio Gollenstede.pdf"));
     }
 }

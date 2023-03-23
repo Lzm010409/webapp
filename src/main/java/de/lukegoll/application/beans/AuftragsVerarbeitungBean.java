@@ -73,6 +73,7 @@ public class AuftragsVerarbeitungBean extends Thread {
 
 
 
+
     public void run() {
         while (isAlive) {
             if (run.compareAndSet(false, true)) {
@@ -156,7 +157,7 @@ public class AuftragsVerarbeitungBean extends Thread {
                 for (int j = 0; j < mail.get(i).getFiles().size(); j++) {
                     Auftrag auftrag = new Auftrag();
                     if (mail.get(i).getFiles().get(j).getFile().getName().contains("Aufnahmebogen")) {
-                        AuftragDataExtractor auftragDataExtractor = new AuftragDataExtractor();
+                        AuftragDataExtractor auftragDataExtractor = new AuftragDataExtractor(auftragService, fahrzeugService, kontaktService);
                         File file = mail.get(i).getFiles().get(j).getFile();
                         if (fileHasFormularFields(file)) {
                             auftrag = auftragDataExtractor.extractTextFromFormular(file);
