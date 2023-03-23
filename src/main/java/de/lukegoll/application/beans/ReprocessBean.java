@@ -37,25 +37,22 @@ public class ReprocessBean {
     public boolean reprocessAuftrag(Auftrag auftrag) {
         try {
             ui.access(() -> {
-                auftragsübersichtView.getProgressDialog().setVisible(true);
-                auftragsübersichtView.getProgressDialog().open();
+               auftragsübersichtView.generateNotifications("Auftrag wird noch einmal versendet!", AuftragStatus.INBEARBEITUNG);
             });
             ListenableFuture<String> restFuture = new Request().httpPost(auftrag,
                     "https://intacc01-api.onrex.de/interfaces/orders", "");
             restFuture.addCallback(
-                    successResult -> auftragsübersichtView.generateNotifications(successResult, true),
-                    failureResult -> auftragsübersichtView.generateNotifications(failureResult.toString(), false));
-
-
-            fahrzeugService.saveFahrzeug(auftrag.getFahrzeug());
+                    successResult -> auftragsübersichtView.generateNotifications("Auftrag wurde erfolgreich versendet!", AuftragStatus.VERARBEITET),
+                    failureResult -> auftragsübersichtView.generateNotifications(failureResult.toString(), AuftragStatus.RESTFEHLER));
+            fahrzeugService.update(auftrag.getFahrzeug());
             if (auftrag.getKontakte() instanceof Set<Kontakt>) {
                 Object[] kontaktArray = auftrag.getKontakte().toArray();
                 for (int j = 0; j < kontaktArray.length; j++) {
                     if (kontaktArray[j] instanceof Kontakt)
-                        kontaktService.saveKontakt((Kontakt) kontaktArray[j]);
+                        kontaktService.update((Kontakt) kontaktArray[j]);
                 }
             }
-            auftragService.saveAuftrag(auftrag);
+            auftragService.update(auftrag);
             auftrag.setAuftragStatus(AuftragStatus.VERARBEITET);
             auftragService.update(auftrag);
 

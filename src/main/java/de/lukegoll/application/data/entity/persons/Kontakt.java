@@ -1,6 +1,7 @@
 package de.lukegoll.application.data.entity.persons;
 
 
+import de.lukegoll.application.data.entity.AbstractEntity;
 import de.lukegoll.application.data.entity.Auftrag;
 import de.lukegoll.application.xml.xmlEntities.constants.PersonType;
 
@@ -14,8 +15,7 @@ public class Kontakt {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "idgenerator")
     // The initial value is to account for data.sql demo data ids
     @SequenceGenerator(name = "idgenerator", initialValue = 1000)
-    @Column(name = "kontaktId")
-    private Long Id;
+    private Long id;
     private String anrede;
     private String vName;
     private String nName;
@@ -25,7 +25,9 @@ public class Kontakt {
     private String stadt;
     private String tel;
     private String mail;
-    private PersonType personType = PersonType.KUNDE;
+    private PersonType personType;
+    @Version
+    private int version;
     @ManyToMany(
             mappedBy = "kontakte"
     )
@@ -47,9 +49,10 @@ public class Kontakt {
 
     }
 
-    public Kunde convertToKunde(Kontakt kontakt){
+    public Kunde convertToKunde(Kontakt kontakt) {
         Kunde kunde = new Kunde();
         kunde.setId(kontakt.getId());
+        kunde.setVersion(kontakt.getVersion());
         kunde.setvName(kontakt.getvName());
         kunde.setnName(kontakt.getnName());
         kunde.setAnrede(kontakt.getAnrede());
@@ -59,12 +62,14 @@ public class Kontakt {
         kunde.setTel(kontakt.getTel());
         kunde.setMail(kontakt.getMail());
         kunde.setAuftragList(kontakt.getAuftragList());
+        kunde.setPersonType(PersonType.KUNDE);
         return kunde;
     }
 
-    public Rechtsanwalt convertToRechtsanwalt(Kontakt kontakt){
+    public Rechtsanwalt convertToRechtsanwalt(Kontakt kontakt) {
         Rechtsanwalt rechtsanwalt = new Rechtsanwalt();
         rechtsanwalt.setId(kontakt.getId());
+        rechtsanwalt.setVersion(kontakt.getVersion());
         rechtsanwalt.setvName(kontakt.getvName());
         rechtsanwalt.setnName(kontakt.getnName());
         rechtsanwalt.setAnrede(kontakt.getAnrede());
@@ -74,12 +79,14 @@ public class Kontakt {
         rechtsanwalt.setTel(kontakt.getTel());
         rechtsanwalt.setMail(kontakt.getMail());
         rechtsanwalt.setAuftragList(kontakt.getAuftragList());
+        rechtsanwalt.setPersonType(PersonType.RECHTSANWALT);
         return rechtsanwalt;
     }
 
-    public Versicherung convertToVersicherung(Kontakt kontakt){
+    public Versicherung convertToVersicherung(Kontakt kontakt) {
         Versicherung versicherung = new Versicherung();
         versicherung.setId(kontakt.getId());
+        versicherung.setVersion(kontakt.getVersion());
         versicherung.setvName(kontakt.getvName());
         versicherung.setnName(kontakt.getnName());
         versicherung.setAnrede(kontakt.getAnrede());
@@ -89,8 +96,10 @@ public class Kontakt {
         versicherung.setTel(kontakt.getTel());
         versicherung.setMail(kontakt.getMail());
         versicherung.setAuftragList(kontakt.getAuftragList());
+        versicherung.setPersonType(PersonType.VERSICHERUNG);
         return versicherung;
     }
+
     public String getAdresse() {
         return adresse;
     }
@@ -156,14 +165,6 @@ public class Kontakt {
         this.mail = mail;
     }
 
-    public Long getId() {
-        return Id;
-    }
-
-    public void setId(Long id) {
-        Id = id;
-    }
-
     public PersonType getPersonType() {
         return personType;
     }
@@ -178,5 +179,22 @@ public class Kontakt {
 
     public void setAuftragList(Set<Auftrag> auftragList) {
         this.auftragList = auftragList;
+    }
+
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }

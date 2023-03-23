@@ -11,6 +11,7 @@ public class Kunde extends Kontakt {
     public Kontakt convertToKontakt(Kunde kunde) {
         Kontakt kontakt = new Kontakt();
         kontakt.setId(kunde.getId());
+        kontakt.setVersion(kunde.getVersion());
         kontakt.setAnrede(kunde.getAnrede());
         kontakt.setvName(kunde.getvName());
         kontakt.setnName(kunde.getnName());
@@ -20,6 +21,9 @@ public class Kunde extends Kontakt {
         kontakt.setTel(kunde.getTel());
         kontakt.setMail(kunde.getMail());
         kontakt.setAuftragList(kunde.getAuftragList());
+        kontakt.setPersonType(PersonType.KUNDE);
         return kontakt;
     }
+
+
 }

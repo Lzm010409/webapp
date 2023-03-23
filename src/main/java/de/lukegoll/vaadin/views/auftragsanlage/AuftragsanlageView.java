@@ -70,10 +70,18 @@ public class AuftragsanlageView extends VerticalLayout {
                 ButtonVariant.LUMO_SUCCESS);
         loggerScreen.add(new Span("Waiting for updates"));
         startButton.addClickListener(buttonClickEvent -> {
-            thread = new AuftragsVerarbeitungBean(buttonClickEvent.getSource().getUI().orElseThrow(), this, this.auftragService, this.fahrzeugService, this.kontaktService);
-            thread.start();
+            startThread(buttonClickEvent.getSource().getUI().orElseThrow(), this);
         });
 
+    }
+
+    private void startThread(UI ui, AuftragsanlageView auftragsanlageView) {
+        thread = new AuftragsVerarbeitungBean(ui, auftragsanlageView, this.auftragService, this.fahrzeugService, this.kontaktService);
+        stopButton.addClickListener(buttonClickEvent -> {
+            thread.interrupt();
+            thread = null;
+        });
+        thread.start();
     }
 
     public void updateUi(UI ui, String result) {
@@ -97,10 +105,7 @@ public class AuftragsanlageView extends VerticalLayout {
     private void configureStopButton() {
         stopButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY,
                 ButtonVariant.LUMO_ERROR);
-        stopButton.addClickListener(buttonClickEvent -> {
-            thread.interrupt();
-            thread = null;
-        });
+
     }
 
     public Button getStartButton() {

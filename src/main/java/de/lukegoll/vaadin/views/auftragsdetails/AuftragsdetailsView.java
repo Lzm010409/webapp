@@ -4,6 +4,8 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.component.accordion.Accordion;
+import com.vaadin.flow.component.accordion.AccordionPanel;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -13,7 +15,9 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H5;
 import com.vaadin.flow.component.html.Header;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.TabSheet;
+import com.vaadin.flow.component.tabs.TabSheetVariant;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
@@ -25,12 +29,16 @@ import de.lukegoll.application.data.entity.Fahrzeug;
 import de.lukegoll.application.data.entity.persons.Kontakt;
 import de.lukegoll.application.data.entity.persons.Kunde;
 import de.lukegoll.application.data.entity.persons.Rechtsanwalt;
+import de.lukegoll.application.data.entity.persons.Versicherung;
 import de.lukegoll.application.data.service.AuftragService;
 import de.lukegoll.application.data.service.FahrzeugService;
 import de.lukegoll.vaadin.converter.IntegerConverter;
 import de.lukegoll.vaadin.converter.KundeConverter;
 import de.lukegoll.vaadin.converter.LocalDateConverter;
 import de.lukegoll.vaadin.converter.LocalTimeConverter;
+
+import java.util.HashSet;
+import java.util.Set;
 
 
 public class AuftragsdetailsView extends FormLayout {
@@ -44,6 +52,8 @@ public class AuftragsdetailsView extends FormLayout {
     Binder<Kunde> kundenBinder = new Binder<>(Kunde.class);
 
     Binder<Rechtsanwalt> rechtsanwaltBinder = new Binder<>(Rechtsanwalt.class);
+
+    Binder<Versicherung> versicherungBinder = new Binder<>(Versicherung.class);
 
     DatePicker auftragsDatum = new DatePicker("Auftragsdatum");
     DatePicker schadenDatum = new DatePicker("Schadendatum");
@@ -89,6 +99,18 @@ public class AuftragsdetailsView extends FormLayout {
     TextField stadtRechtsanwalt = new TextField("Stadt");
     TextField telRechtsanwalt = new TextField("Tel");
     TextField mailRechtsanwalt = new TextField("Mail");
+
+    /**
+     * Text-Fields für die Versicherungsdaten
+     */
+    TextField anredeVersicherung = new TextField("Anrede");
+    TextField vNameVersicherung = new TextField("Vorname");
+    TextField nNameVersicherung = new TextField("Nachname");
+    TextField adresseVersicherung = new TextField("Adresse");
+    TextField plzVersicherung = new TextField("PLZ");
+    TextField stadtVersicherung = new TextField("Stadt");
+    TextField telVersicherung = new TextField("Tel");
+    TextField mailVersicherung = new TextField("Mail");
     Button saveButton = new Button("Speichern");
     Button deleteButton = new Button("Löschen");
     Button cancelButton = new Button("Abbrechen");
@@ -106,6 +128,7 @@ public class AuftragsdetailsView extends FormLayout {
         configureAuftragsDetailsBinder();
         configureKundenBinder();
         configureRechtsanwaltBinder();
+        configureVersicherungBinder();
         add(createTabSheet()
 
         );
@@ -113,6 +136,9 @@ public class AuftragsdetailsView extends FormLayout {
 
     private Component createTabSheet() {
         TabSheet tabSheet = new TabSheet();
+        tabSheet.setWidth("600px");
+        tabSheet.setMaxWidth("100%");
+        tabSheet.addThemeVariants(TabSheetVariant.LUMO_TABS_HIDE_SCROLL_BUTTONS);
         tabSheet.add("Auftragsdetails", createAuftragsTab());
         tabSheet.add("Fahrzeugdetails", createFahrzeugTab());
         tabSheet.add("Kontaktdetails", createKontaktTab());
@@ -120,7 +146,7 @@ public class AuftragsdetailsView extends FormLayout {
         return tabSheet;
     }
 
-    private Component creatKundenForm() {
+    private Component createKundenForm() {
         FormLayout formLayout = new FormLayout();
         formLayout.add(
                 anredeKunde,
@@ -135,7 +161,7 @@ public class AuftragsdetailsView extends FormLayout {
         return formLayout;
     }
 
-    private Component creatRechtsanwaltForm() {
+    private Component createRechtsanwaltForm() {
         FormLayout formLayout = new FormLayout();
         formLayout.add(
                 anredeRechtsanwalt,
@@ -146,6 +172,21 @@ public class AuftragsdetailsView extends FormLayout {
                 stadtRechtsanwalt,
                 telRechtsanwalt,
                 mailRechtsanwalt
+        );
+        return formLayout;
+    }
+
+    private Component createVersicherungForm() {
+        FormLayout formLayout = new FormLayout();
+        formLayout.add(
+                anredeVersicherung,
+                vNameVersicherung,
+                nNameVersicherung,
+                adresseVersicherung,
+                plzVersicherung,
+                stadtVersicherung,
+                telVersicherung,
+                mailVersicherung
         );
         return formLayout;
     }
@@ -164,10 +205,11 @@ public class AuftragsdetailsView extends FormLayout {
     }
 
     private Component createKontaktTab() {
-        FormLayout formLayout = new FormLayout();
-        formLayout.add(creatKundenForm(), creatRechtsanwaltForm(),
-                versicherung);
-        return formLayout;
+        Accordion customDetailsPanel = new Accordion();
+        customDetailsPanel.add("Kunde", createKundenForm());
+        customDetailsPanel.add("Rechtsanwalt", createRechtsanwaltForm());
+        customDetailsPanel.add("Versicherung", createVersicherungForm());
+        return customDetailsPanel;
     }
 
     private Component createAuftragsTab() {
@@ -225,6 +267,17 @@ public class AuftragsdetailsView extends FormLayout {
         rechtsanwaltBinder.forField(mailRechtsanwalt).bind(Rechtsanwalt::getMail, Rechtsanwalt::setMail);
     }
 
+    private void configureVersicherungBinder() {
+        versicherungBinder.forField(vNameVersicherung).bind(Versicherung::getvName, Versicherung::setvName);
+        versicherungBinder.forField(nNameVersicherung).bind(Versicherung::getnName, Versicherung::setnName);
+        versicherungBinder.forField(anredeVersicherung).bind(Versicherung::getAnrede, Versicherung::setAnrede);
+        versicherungBinder.forField(adresseVersicherung).bind(Versicherung::getAdresse, Versicherung::setAdresse);
+        versicherungBinder.forField(plzVersicherung).bind(Versicherung::getPlz, Versicherung::setPlz);
+        versicherungBinder.forField(stadtVersicherung).bind(Versicherung::getStadt, Versicherung::setStadt);
+        versicherungBinder.forField(telVersicherung).bind(Versicherung::getTel, Versicherung::setTel);
+        versicherungBinder.forField(mailVersicherung).bind(Versicherung::getMail, Versicherung::setMail);
+    }
+
     private void configureFahrzeugBinder() {
         fahrzeugBinder.forField(hersteller).bind(Fahrzeug::getHersteller, Fahrzeug::setHersteller);
         fahrzeugBinder.forField(model).bind(Fahrzeug::getTyp, Fahrzeug::setTyp);
@@ -247,13 +300,23 @@ public class AuftragsdetailsView extends FormLayout {
         resendButton.addClickListener(buttonClickEvent -> fireEvent(new ResendEvent(this, auftragsDetailsBinder.getBean(), fahrzeugBinder.getBean())));
         auftragsDetailsBinder.addStatusChangeListener(statusChangeEvent -> saveButton.setEnabled(auftragsDetailsBinder.isValid()));
         fahrzeugBinder.addStatusChangeListener(statusChangeEvent -> saveButton.setEnabled(fahrzeugBinder.isValid()));
+        kundenBinder.addStatusChangeListener(statusChangeEvent -> saveButton.setEnabled(kundenBinder.isValid()));
+        rechtsanwaltBinder.addStatusChangeListener(statusChangeEvent -> saveButton.setEnabled(rechtsanwaltBinder.isValid()));
+        versicherungBinder.addStatusChangeListener(statusChangeEvent -> saveButton.setEnabled(versicherungBinder.isValid()));
 
         return new HorizontalLayout(saveButton, deleteButton, cancelButton, resendButton);
     }
 
     private void validateAndSave() {
-        if (auftragsDetailsBinder.isValid() && fahrzeugBinder.isValid()) {
-            fireEvent(new SaveEvent(this, auftragsDetailsBinder.getBean(), fahrzeugBinder.getBean()));
+        if (auftragsDetailsBinder.isValid() && fahrzeugBinder.isValid() && kundenBinder.isValid() && rechtsanwaltBinder.isValid()
+                && versicherungBinder.isValid()) {
+            Set<Kontakt> kontakts = new HashSet<>();
+            kontakts.add(new Kunde().convertToKontakt(kundenBinder.getBean()));
+            kontakts.add(new Rechtsanwalt().convertToKontakt(rechtsanwaltBinder.getBean()));
+            kontakts.add(new Versicherung().convertToKontakt(versicherungBinder.getBean()));
+            Auftrag auftrag1 = auftragsDetailsBinder.getBean();
+            auftrag1.setKontakte(kontakts);
+            fireEvent(new UpdateEvent(this, auftrag1, fahrzeugBinder.getBean(), kontakts));
         }
     }
 
@@ -263,6 +326,10 @@ public class AuftragsdetailsView extends FormLayout {
 
     public void setRechtsanwalt(Rechtsanwalt rechtsanwalt) {
         rechtsanwaltBinder.setBean(rechtsanwalt);
+    }
+
+    public void setVersicherung(Versicherung versicherung) {
+        versicherungBinder.setBean(versicherung);
     }
 
     public void setAuftrag(Auftrag auftrag) {
@@ -480,7 +547,22 @@ public class AuftragsdetailsView extends FormLayout {
         private Auftrag auftrag;
         private Fahrzeug fahrzeug;
 
+        private Set<Kontakt> kontakts;
+
+        protected AuftragsDetailsEvent(AuftragsdetailsView source, Auftrag auftrag, Fahrzeug fahrzeug, Set<Kontakt> kontakts) {
+            super(source, false);
+            this.auftrag = auftrag;
+            this.fahrzeug = fahrzeug;
+            this.kontakts = kontakts;
+        }
+
         protected AuftragsDetailsEvent(AuftragsdetailsView source, Auftrag auftrag, Fahrzeug fahrzeug) {
+            super(source, false);
+            this.auftrag = auftrag;
+            this.fahrzeug = fahrzeug;
+        }
+
+        protected AuftragsDetailsEvent(AuftragsdetailsView source, Auftrag auftrag) {
             super(source, false);
             this.auftrag = auftrag;
             this.fahrzeug = fahrzeug;
@@ -493,11 +575,21 @@ public class AuftragsdetailsView extends FormLayout {
         public Fahrzeug getFahrzeug() {
             return fahrzeug;
         }
+
+        public Set<Kontakt> getKontakts() {
+            return kontakts;
+        }
     }
 
     public static class SaveEvent extends AuftragsDetailsEvent {
-        SaveEvent(AuftragsdetailsView source, Auftrag auftrag, Fahrzeug fahrzeug) {
-            super(source, auftrag, fahrzeug);
+        SaveEvent(AuftragsdetailsView source, Auftrag auftrag, Fahrzeug fahrzeug, Set<Kontakt> kontakts) {
+            super(source, auftrag, fahrzeug, kontakts);
+        }
+    }
+
+    public static class UpdateEvent extends AuftragsDetailsEvent {
+        UpdateEvent(AuftragsdetailsView source, Auftrag auftrag, Fahrzeug fahrzeug, Set<Kontakt> kontakts) {
+            super(source, auftrag, fahrzeug, kontakts);
         }
     }
 
@@ -515,6 +607,10 @@ public class AuftragsdetailsView extends FormLayout {
     }
 
     public static class ResendEvent extends AuftragsDetailsEvent {
+        ResendEvent(AuftragsdetailsView source, Auftrag auftrag, Fahrzeug fahrzeug, Set<Kontakt> kontakts) {
+            super(source, auftrag, fahrzeug, kontakts);
+        }
+
         ResendEvent(AuftragsdetailsView source, Auftrag auftrag, Fahrzeug fahrzeug) {
             super(source, auftrag, fahrzeug);
         }
@@ -535,4 +631,10 @@ public class AuftragsdetailsView extends FormLayout {
     public Registration addResendListener(ComponentEventListener<ResendEvent> listener) {
         return addListener(ResendEvent.class, listener);
     }
+
+    public Registration addUpdateListener(ComponentEventListener<UpdateEvent> listener) {
+        return addListener(UpdateEvent.class, listener);
+    }
+
+
 }

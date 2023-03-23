@@ -11,6 +11,7 @@ public class Rechtsanwalt extends Kontakt {
     public Kontakt convertToKontakt(Rechtsanwalt rechtsanwalt) {
         Kontakt kontakt = new Kontakt();
         kontakt.setId(rechtsanwalt.getId());
+        kontakt.setVersion(rechtsanwalt.getVersion());
         kontakt.setAnrede(rechtsanwalt.getAnrede());
         kontakt.setvName(rechtsanwalt.getvName());
         kontakt.setnName(rechtsanwalt.getnName());
@@ -20,6 +21,7 @@ public class Rechtsanwalt extends Kontakt {
         kontakt.setTel(rechtsanwalt.getTel());
         kontakt.setMail(rechtsanwalt.getMail());
         kontakt.setAuftragList(rechtsanwalt.getAuftragList());
+        kontakt.setPersonType(PersonType.RECHTSANWALT);
         return kontakt;
     }
 }

@@ -53,11 +53,11 @@ public class PersonDataExtractor implements TextExtractor {
             rechtsanwalt.setPersonType(PersonType.RECHTSANWALT);
             rechtsanwalt.setvName("TEST");
             rechtsanwalt.setnName("Rechtsanwalt");
-            Kontakt versicherung = new Kontakt();
-            rechtsanwalt.setPersonType(PersonType.VERSICHERUNG);
-            rechtsanwalt.setvName("TEST");
-            rechtsanwalt.setnName("Versicherung");
             kontakts.add(rechtsanwalt);
+            Kontakt versicherung = new Kontakt();
+            versicherung.setPersonType(PersonType.VERSICHERUNG);
+            versicherung.setvName("TEST");
+            versicherung.setnName("Versicherung");
             kontakts.add(versicherung);
             return kontakts;
         } catch (FileNotFoundException e) {
