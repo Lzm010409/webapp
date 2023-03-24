@@ -11,9 +11,11 @@ import de.lukegoll.application.data.service.FahrzeugService;
 import de.lukegoll.application.data.service.KontaktService;
 import de.lukegoll.application.restfulapi.requests.Request;
 import de.lukegoll.vaadin.views.auftragsübersicht.AuftragsübersichtView;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.concurrent.ListenableFuture;
 
 import java.time.LocalDateTime;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -24,7 +26,11 @@ public class ReprocessBean {
 
     private final UI ui;
     private final AuftragsübersichtView auftragsübersichtView;
+    @Value("${dynarex.server}")
+    private String dynServerData;
 
+    @Value("${dynarex.token}")
+    private String dynToken;
 
     public ReprocessBean(UI ui, AuftragsübersichtView auftragsübersichtView, AuftragService auftragService, FahrzeugService fahrzeugService, KontaktService kontaktService) {
         this.ui = ui;
@@ -39,11 +45,12 @@ public class ReprocessBean {
             ui.access(() -> {
                auftragsübersichtView.generateNotifications("Auftrag wird noch einmal versendet!", AuftragStatus.INBEARBEITUNG);
             });
-            ListenableFuture<String> restFuture = new Request().httpPost(auftrag,
-                    "https://intacc01-api.onrex.de/interfaces/orders", "");
+            ListenableFuture<Auftrag> restFuture = new Request().httpPostAuftrag(auftrag,
+                    dynServerData, dynToken);
             restFuture.addCallback(
                     successResult -> auftragsübersichtView.generateNotifications("Auftrag wurde erfolgreich versendet!", AuftragStatus.VERARBEITET),
                     failureResult -> auftragsübersichtView.generateNotifications(failureResult.toString(), AuftragStatus.RESTFEHLER));
+            auftrag=restFuture.get();
             fahrzeugService.update(auftrag.getFahrzeug());
             if (auftrag.getKontakte() instanceof Set<Kontakt>) {
                 Object[] kontaktArray = auftrag.getKontakte().toArray();

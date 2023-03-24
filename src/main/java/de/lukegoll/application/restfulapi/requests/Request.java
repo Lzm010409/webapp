@@ -18,10 +18,42 @@ import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.util.concurrent.ListenableFuture;
 
 import java.io.*;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Request {
     @Async
-    public ListenableFuture<String> httpPost(Auftrag auftrag, String URL, String TOKEN) {
+    public ListenableFuture<List<Auftrag>> httpPostAufträge(List<Auftrag> auftragList, String URL, String TOKEN) {
+        List<Auftrag> aufträge = new LinkedList<>();
+        for (int i = 0; i < auftragList.size(); i++) {
+            CloseableHttpClient httpclient = HttpClients.createDefault();
+            StringEntity requestEntity = new StringEntity(
+                    new XMLTranslator().writeXmlRequest(auftragList.get(i)),
+                    ContentType.APPLICATION_XML
+            );
+            HttpPost httpPost = new HttpPost(URL);
+            httpPost.setEntity(requestEntity);
+            String token = "Basic " + TOKEN;
+            httpPost.setHeader("Authorization", token);
+
+            try (CloseableHttpResponse response = httpclient.execute(httpPost)) {
+                System.out.println(response.getCode() + " " + response.getReasonPhrase());
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+                String output = bufferedReader.readLine();
+                httpclient.close();
+                aufträge.add(auftragList.get(i));
+            } catch (IOException e) {
+                auftragList.get(i).setAuftragStatus(AuftragStatus.RESTFEHLER);
+                aufträge.add(auftragList.get(i));
+
+            }
+
+        }
+        return AsyncResult.forValue(aufträge);
+    }
+
+    @Async
+    public ListenableFuture<Auftrag> httpPostAuftrag(Auftrag auftrag, String URL, String TOKEN) {
         CloseableHttpClient httpclient = HttpClients.createDefault();
         StringEntity requestEntity = new StringEntity(
                 new XMLTranslator().writeXmlRequest(auftrag),
@@ -29,7 +61,7 @@ public class Request {
         );
         HttpPost httpPost = new HttpPost(URL);
         httpPost.setEntity(requestEntity);
-        String token  = "Basic " + TOKEN;
+        String token = "Basic " + TOKEN;
         httpPost.setHeader("Authorization", token);
 
         try (CloseableHttpResponse response = httpclient.execute(httpPost)) {
@@ -37,11 +69,12 @@ public class Request {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
             String output = bufferedReader.readLine();
             httpclient.close();
-            return AsyncResult.forValue(output);
         } catch (IOException e) {
             auftrag.setAuftragStatus(AuftragStatus.RESTFEHLER);
-            return AsyncResult.forExecutionException(e);
         }
+
+
+        return AsyncResult.forValue(auftrag);
     }
 
     public String httpPost(File file, String URL, String TOKEN) {

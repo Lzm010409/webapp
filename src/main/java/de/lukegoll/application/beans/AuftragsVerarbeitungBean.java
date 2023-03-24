@@ -28,6 +28,8 @@ import de.lukegoll.vaadin.views.auftragsanlage.AuftragsanlageView;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import org.jboss.logging.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.*;
 import org.springframework.stereotype.Component;
@@ -50,9 +52,20 @@ public class AuftragsVerarbeitungBean extends Thread {
     private final Logger logger = Logger.getLogger(AuftragsVerarbeitungBean.class);
     boolean runCondition = true;
     private boolean isAlive = true;
-    ReceiveMailService receiveMailService = new ReceiveMailService();
+    ReceiveMailService receiveMailService;
     AtomicBoolean run = new AtomicBoolean(false);
     AtomicReference<List<String>> progressList = new AtomicReference<>();
+    @Value("${spring.mail.username}")
+    private String userName;
+
+    @Value("${spring.mail.password}")
+    private String userPassword;
+
+    @Value("${dynarex.server}")
+    private String dynServerData;
+
+    @Value("${dynarex.token}")
+    private String dynToken;
 
     private final UI ui;
     private final AuftragsanlageView view;
@@ -62,7 +75,7 @@ public class AuftragsVerarbeitungBean extends Thread {
     AuftragService auftragService;
     FahrzeugService fahrzeugService;
     KontaktService kontaktService;
-
+@Autowired
     public AuftragsVerarbeitungBean(UI ui, AuftragsanlageView view, AuftragService auftragService, FahrzeugService fahrzeugService, KontaktService kontaktService) {
         this.auftragService = auftragService;
         this.fahrzeugService = fahrzeugService;
@@ -72,14 +85,12 @@ public class AuftragsVerarbeitungBean extends Thread {
     }
 
 
-
-
     public void run() {
         while (isAlive) {
             if (run.compareAndSet(false, true)) {
                 List<String> stringList = new LinkedList<>();
                 try {
-                    receiveMailService.login("Entwicklung@gollenstede-entwicklung.de", "");
+                    receiveMailService.login(userName, userPassword);
                     ListenableFuture<List<Message>> messageFuture = receiveMailService.downloadNewMails();
                     messageFuture.addCallback(
                             successResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Mails heruntergeladen: " + successResult.size()),
@@ -94,14 +105,14 @@ public class AuftragsVerarbeitungBean extends Thread {
                         auftragFuture.addCallback(
                                 successResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Es wurden: " + successResult.size() + " Aufträge erstellt"),
                                 failureResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Fehler beim erstellen der Aufträge: " + failureResult));
-                        for (int i = 0; i < auftragFuture.get().size(); i++) {
-                            ListenableFuture<String> restFuture = new Request().httpPost(auftragFuture.get().get(i),
-                                    "https://intacc01-api.onrex.de/interfaces/orders", "");
-                            restFuture.addCallback(
-                                    successResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Übertragung an Dynarex-Server erfolgreich: " + successResult),
-                                    failureResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Fehler beim übertragen an Dynarex-Server: " + failureResult));
-                        }
-                        for (int i = 0; i < auftragFuture.get().size(); i++) {
+
+                        ListenableFuture<List<Auftrag>> restFuture = new Request().httpPostAufträge(auftragFuture.get(),
+                                dynServerData, dynToken);
+                        restFuture.addCallback(
+                                successResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Übertragung von: " + successResult.size() + "Aufträgen erfolreich!"),
+                                failureResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Fehler beim übertragen an Dynarex-Server: " + failureResult));
+                        receiveMailService.moveMails(mailFuture.get());
+                        for (int i = 0; i < restFuture.get().size(); i++) {
                             Auftrag auftrag = auftragFuture.get().get(i);
                             fahrzeugService.saveFahrzeug(auftrag.getFahrzeug());
                             if (auftrag.getKontakte() instanceof Set<Kontakt>) {
@@ -115,7 +126,6 @@ public class AuftragsVerarbeitungBean extends Thread {
                             auftrag.setAuftragStatus(AuftragStatus.VERARBEITET);
                             auftragService.update(auftrag);
                         }
-                        //receiveMailService.moveMails(mailFuture.get());
                     }
                 } catch (MessagingException e) {
                     throw new RuntimeException(e);
@@ -211,6 +221,7 @@ public class AuftragsVerarbeitungBean extends Thread {
         return receiveMailService;
     }
 
+    @Autowired
     public void setReceiveMailService(ReceiveMailService receiveMailService) {
         this.receiveMailService = receiveMailService;
     }
@@ -223,8 +234,92 @@ public class AuftragsVerarbeitungBean extends Thread {
         return progressList.get();
     }
 
+    public Logger getLogger() {
+        return logger;
+    }
 
-    public static void main(String[] args) {
+    public void setRun(AtomicBoolean run) {
+        this.run = run;
+    }
 
+    public void setProgressList(AtomicReference<List<String>> progressList) {
+        this.progressList = progressList;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getUserPassword() {
+        return userPassword;
+    }
+
+    public void setUserPassword(String userPassword) {
+        this.userPassword = userPassword;
+    }
+
+    public UI getUi() {
+        return ui;
+    }
+
+    public AuftragsanlageView getView() {
+        return view;
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
+    }
+
+    public AuftragService getAuftragService() {
+        return auftragService;
+    }
+
+    public void setAuftragService(AuftragService auftragService) {
+        this.auftragService = auftragService;
+    }
+
+    public FahrzeugService getFahrzeugService() {
+        return fahrzeugService;
+    }
+
+    public void setFahrzeugService(FahrzeugService fahrzeugService) {
+        this.fahrzeugService = fahrzeugService;
+    }
+
+    public KontaktService getKontaktService() {
+        return kontaktService;
+    }
+
+    public void setKontaktService(KontaktService kontaktService) {
+        this.kontaktService = kontaktService;
+    }
+
+
+    public void setAlive(boolean alive) {
+        isAlive = alive;
+    }
+
+    public String getDynServerData() {
+        return dynServerData;
+    }
+
+    public void setDynServerData(String dynServerData) {
+        this.dynServerData = dynServerData;
+    }
+
+    public String getDynToken() {
+        return dynToken;
+    }
+
+    public void setDynToken(String dynToken) {
+        this.dynToken = dynToken;
     }
 }

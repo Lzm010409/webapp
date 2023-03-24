@@ -21,7 +21,7 @@ public class AuftragService {
         this.auftragRepository = repository;
 
     }
-@Transactional
+
     public Optional<Auftrag> get(Long id) {
         return auftragRepository.findById(id);
     }

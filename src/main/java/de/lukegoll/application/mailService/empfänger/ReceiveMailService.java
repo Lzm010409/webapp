@@ -9,6 +9,7 @@ import jakarta.mail.*;
 import org.jboss.logging.Logger;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
+import org.springframework.stereotype.Component;
 import org.springframework.util.concurrent.ListenableFuture;
 
 import java.io.*;
@@ -17,7 +18,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
-
+@Component
 public class ReceiveMailService {
 
     protected Store imapStore;
@@ -146,7 +147,7 @@ public class ReceiveMailService {
 
     }
 
-    public void moveMails(List<Mail> mailList) {
+    public ListenableFuture<String> moveMails(List<Mail> mailList) {
         if (imapStore == null) {
             throw new IllegalStateException("Zuerst einloggen!");
         }
@@ -159,6 +160,7 @@ public class ReceiveMailService {
             mailFolder.setFlags(messages, new Flags(Flags.Flag.DELETED), true);
             mailFolder.expunge();
             imapStore.close();
+            return AsyncResult.forValue("Alle Mails erfolreich in den Papierkorb verschoben!");
         } catch (MessagingException e) {
             throw new RuntimeException(e);
         }
