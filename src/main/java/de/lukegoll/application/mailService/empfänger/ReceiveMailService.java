@@ -61,8 +61,8 @@ public class ReceiveMailService {
 
     }
 
-    @Async
-    public ListenableFuture<List<Message>> downloadNewMails() throws MessagingException {
+
+    public List<Message> downloadNewMails() throws MessagingException {
         if (imapStore == null) {
             throw new IllegalStateException("Zuerst einloggen!");
         }
@@ -71,25 +71,25 @@ public class ReceiveMailService {
             Folder mailFolder = imapStore.getFolder("INBOX");
             mailFolder.open(Folder.READ_ONLY);
             Message[] messages = mailFolder.getMessages();
-            return AsyncResult.forValue(Arrays.asList(messages));
+            return Arrays.asList(messages);
         } catch (
                 NoSuchProviderException e) {
             e.printStackTrace();
-            return AsyncResult.forExecutionException(e);
+            return null;
         } catch (
                 MessagingException e) {
             e.printStackTrace();
-            return AsyncResult.forExecutionException(e);
+            return null;
         } catch (
                 Exception e) {
             e.printStackTrace();
-            return AsyncResult.forExecutionException(e);
+            return null;
         }
 
 
     }
 
-    public ListenableFuture<List<Mail>> extractAttachments(List<Message> messages) {
+    public List<Mail> extractAttachments(List<Message> messages) {
         List<Mail> mails = new LinkedList<>();
         try {
             for (int i = 0; i < messages.size(); i++) {
@@ -111,11 +111,9 @@ public class ReceiveMailService {
                 Multipart multipart = (Multipart) message.getContent();
                 List<Anhänge> anhängeList = new LinkedList<>();
                 for (int k = 0; k < multipart.getCount(); k++) {
-
-
                     BodyPart bodyPart = multipart.getBodyPart(k);
                     int number = (int) (Math.random() * 100);
-                    String filePath = String.format("/Users/lukegollenstede/Desktop/TEST/Files/%s-%d.\\%s", bodyPart.getFileName(), number, "pdf");
+                    String filePath = String.format("/Users/lukegollenstede/Desktop/TEST/Files/%s-%d", number, bodyPart.getFileName());
                     if (bodyPart.getFileName() == null) {
                         continue;
                     }
@@ -130,7 +128,7 @@ public class ReceiveMailService {
                     anhänge.setTitle(bodyPart.getFileName());
                     anhängeList.add(anhänge);
                     System.out.println(bodyPart.getFileName());
-                    logger.log(Logger.Level.INFO, "Attachment: " + k + ", " + bodyPart.getFileName()
+                    logger.log(Logger.Level.INFO, "Es wurden folgende Attachments extrahiert: " + k + ", " + bodyPart.getFileName()
                     );
                 }
                 if (anhängeList.size() != 0) {
@@ -139,15 +137,15 @@ public class ReceiveMailService {
                 }
 
             }
-            return AsyncResult.forValue(mails);
+            return mails;
         } catch (
                 Exception e) {
-            return AsyncResult.forExecutionException(e);
+            return null;
         }
 
     }
 
-    public ListenableFuture<String> moveMails(List<Mail> mailList) {
+    public boolean moveMails(List<Message> messageList) {
         if (imapStore == null) {
             throw new IllegalStateException("Zuerst einloggen!");
         }
@@ -155,13 +153,18 @@ public class ReceiveMailService {
             Folder verarbeitet = imapStore.getFolder("Verarbeitet");
             Folder mailFolder = imapStore.getFolder("INBOX");
             mailFolder.open(Folder.READ_WRITE);
-            Message[] messages = mailFolder.getMessages();
+            Message[] messages = new Message[messageList.size()];
+            for (int i = 0; i < messageList.size(); i++) {
+                messages[i] = messageList.get(i);
+            }
             mailFolder.copyMessages(messages, verarbeitet);
             mailFolder.setFlags(messages, new Flags(Flags.Flag.DELETED), true);
             mailFolder.expunge();
             imapStore.close();
-            return AsyncResult.forValue("Alle Mails erfolreich in den Papierkorb verschoben!");
+            logger.log(Logger.Level.INFO,"Es wurden " + messages.length + " Mails in den Verarbeitet Ordern verschoben. ");
+            return true;
         } catch (MessagingException e) {
+            logger.log(Logger.Level.INFO,"Fehler beim verschieben der Mails!");
             throw new RuntimeException(e);
         }
     }

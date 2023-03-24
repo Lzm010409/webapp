@@ -48,6 +48,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+@Component
 public class AuftragsVerarbeitungBean extends Thread {
     private final Logger logger = Logger.getLogger(AuftragsVerarbeitungBean.class);
     boolean runCondition = true;
@@ -55,6 +56,7 @@ public class AuftragsVerarbeitungBean extends Thread {
     ReceiveMailService receiveMailService;
     AtomicBoolean run = new AtomicBoolean(false);
     AtomicReference<List<String>> progressList = new AtomicReference<>();
+    List<Message> messageFuture = new LinkedList<>();
     @Value("${spring.mail.username}")
     private String userName;
 
@@ -67,79 +69,56 @@ public class AuftragsVerarbeitungBean extends Thread {
     @Value("${dynarex.token}")
     private String dynToken;
 
-    private final UI ui;
-    private final AuftragsanlageView view;
 
     private int count = 0;
 
     AuftragService auftragService;
     FahrzeugService fahrzeugService;
     KontaktService kontaktService;
-@Autowired
-    public AuftragsVerarbeitungBean(UI ui, AuftragsanlageView view, AuftragService auftragService, FahrzeugService fahrzeugService, KontaktService kontaktService) {
+
+    @Autowired
+    public AuftragsVerarbeitungBean(AuftragService auftragService, FahrzeugService fahrzeugService, KontaktService kontaktService, ReceiveMailService receiveMailService) {
         this.auftragService = auftragService;
+        this.receiveMailService = receiveMailService;
         this.fahrzeugService = fahrzeugService;
         this.kontaktService = kontaktService;
-        this.ui = ui;
-        this.view = view;
+
     }
 
-
+    @Scheduled(fixedDelay = 10000)
     public void run() {
-        while (isAlive) {
-            if (run.compareAndSet(false, true)) {
-                List<String> stringList = new LinkedList<>();
-                try {
-                    receiveMailService.login(userName, userPassword);
-                    ListenableFuture<List<Message>> messageFuture = receiveMailService.downloadNewMails();
-                    messageFuture.addCallback(
-                            successResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Mails heruntergeladen: " + successResult.size()),
-                            failureResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Fehler beim herunterladen der Mails:" + failureResult));
-                    if (messageFuture.get().size() > 0) {
-                        List<Message> messages = messageFuture.get();
-                        ListenableFuture<List<Mail>> mailFuture = receiveMailService.extractAttachments(messages);
-                        mailFuture.addCallback(
-                                successResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Dateien aus Mails extrahiert: " + successResult.size()),
-                                failureResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Fehler beim extrahieren der Dateien:" + failureResult));
-                        ListenableFuture<List<Auftrag>> auftragFuture = startAuftragsService(mailFuture.get());
-                        auftragFuture.addCallback(
-                                successResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Es wurden: " + successResult.size() + " Aufträge erstellt"),
-                                failureResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Fehler beim erstellen der Aufträge: " + failureResult));
-
-                        ListenableFuture<List<Auftrag>> restFuture = new Request().httpPostAufträge(auftragFuture.get(),
-                                dynServerData, dynToken);
-                        restFuture.addCallback(
-                                successResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Übertragung von: " + successResult.size() + "Aufträgen erfolreich!"),
-                                failureResult -> view.updateUi(ui, LocalDateTime.now().toString() + " Fehler beim übertragen an Dynarex-Server: " + failureResult));
-                        receiveMailService.moveMails(mailFuture.get());
-                        for (int i = 0; i < restFuture.get().size(); i++) {
-                            Auftrag auftrag = auftragFuture.get().get(i);
-                            fahrzeugService.saveFahrzeug(auftrag.getFahrzeug());
-                            if (auftrag.getKontakte() instanceof Set<Kontakt>) {
-                                Object[] kontaktArray = auftrag.getKontakte().toArray();
-                                for (int j = 0; j < kontaktArray.length; j++) {
-                                    if (kontaktArray[j] instanceof Kontakt)
-                                        kontaktService.saveKontakt((Kontakt) kontaktArray[j]);
-                                }
-                            }
-                            auftragService.saveAuftrag(auftrag);
-                            auftrag.setAuftragStatus(AuftragStatus.VERARBEITET);
-                            auftragService.update(auftrag);
+        try {
+            receiveMailService.login(userName, userPassword);
+            messageFuture = receiveMailService.downloadNewMails();
+            if (messageFuture.size() > 0) {
+                List<Mail> mailFuture = receiveMailService.extractAttachments(messageFuture);
+                receiveMailService.moveMails(messageFuture);
+                for (int i = 0; i < messageFuture.size(); i++) {
+                    Auftrag auftragFuture = startAuftragsService(mailFuture.get(i));
+                    ListenableFuture<Auftrag> restFuture = new Request().httpPostAuftrag(auftragFuture,
+                            dynServerData, dynToken);
+                    Auftrag auftrag = restFuture.get();
+                    fahrzeugService.saveFahrzeug(auftrag.getFahrzeug());
+                    if (auftrag.getKontakte() instanceof Set<Kontakt>) {
+                        Object[] kontaktArray = auftrag.getKontakte().toArray();
+                        for (int j = 0; j < kontaktArray.length; j++) {
+                            if (kontaktArray[j] instanceof Kontakt)
+                                kontaktService.saveKontakt((Kontakt) kontaktArray[j]);
                         }
                     }
-                } catch (MessagingException e) {
-                    throw new RuntimeException(e);
-                } catch (ExecutionException e) {
-                    throw new RuntimeException(e);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                } finally {
-                    progressList.set(stringList);
-                    run.set(false);
-                    rest(5000);
+                    auftragService.saveAuftrag(auftrag);
+                    auftrag.setAuftragStatus(AuftragStatus.VERARBEITET);
+                    auftragService.update(auftrag);
                 }
             }
+        } catch (MessagingException ex) {
+            throw new RuntimeException(ex);
+        } catch (ExecutionException ex) {
+            throw new RuntimeException(ex);
+        } catch (InterruptedException ex) {
+            throw new RuntimeException(ex);
         }
+
     }
 
 
@@ -159,30 +138,29 @@ public class AuftragsVerarbeitungBean extends Thread {
         this.notify();
     }
 
-    @Async
-    public ListenableFuture<List<Auftrag>> startAuftragsService(List<Mail> mail) {
-        List<Auftrag> auftragList = new LinkedList<>();
+
+    public Auftrag startAuftragsService(Mail mail) {
+        Auftrag auftrag = new Auftrag();
         try {
-            for (int i = 0; i < mail.size(); i++) {
-                for (int j = 0; j < mail.get(i).getFiles().size(); j++) {
-                    Auftrag auftrag = new Auftrag();
-                    if (mail.get(i).getFiles().get(j).getFile().getName().contains("Aufnahmebogen")) {
-                        AuftragDataExtractor auftragDataExtractor = new AuftragDataExtractor(auftragService, fahrzeugService, kontaktService);
-                        File file = mail.get(i).getFiles().get(j).getFile();
-                        if (fileHasFormularFields(file)) {
-                            auftrag = auftragDataExtractor.extractTextFromFormular(file);
-                            auftragList.add(auftrag);
-                        } else {
-                            auftrag = ((Auftrag) auftragDataExtractor.extractText(file));
-                            auftragList.add(auftrag);
-                        }
+            for (int j = 0; j < mail.getFiles().size(); j++) {
+                if (mail.getFiles().get(j).getFile().getName().contains("Aufnahmebogen")) {
+                    AuftragDataExtractor auftragDataExtractor = new AuftragDataExtractor(auftragService, fahrzeugService, kontaktService);
+                    File file = mail.getFiles().get(j).getFile();
+                    if (fileHasFormularFields(file)) {
+                        logger.log(Logger.Level.INFO, "Formular wird ausgelesen...");
+                        auftrag = auftragDataExtractor.extractTextFromFormular(file);
+
+                    } else {
+                        auftrag = ((Auftrag) auftragDataExtractor.extractText(file));
+
                     }
                 }
+
             }
 
-            return AsyncResult.forValue(auftragList);
+            return auftrag;
         } catch (IOException e) {
-            return AsyncResult.forExecutionException(e);
+            return null;
         }
     }
 
@@ -260,14 +238,6 @@ public class AuftragsVerarbeitungBean extends Thread {
 
     public void setUserPassword(String userPassword) {
         this.userPassword = userPassword;
-    }
-
-    public UI getUi() {
-        return ui;
-    }
-
-    public AuftragsanlageView getView() {
-        return view;
     }
 
     public int getCount() {

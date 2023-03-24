@@ -22,8 +22,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Request {
-    @Async
-    public ListenableFuture<List<Auftrag>> httpPostAufträge(List<Auftrag> auftragList, String URL, String TOKEN) {
+
+    public List<Auftrag>httpPostAufträge(List<Auftrag> auftragList, String URL, String TOKEN) {
         List<Auftrag> aufträge = new LinkedList<>();
         for (int i = 0; i < auftragList.size(); i++) {
             CloseableHttpClient httpclient = HttpClients.createDefault();
@@ -49,7 +49,7 @@ public class Request {
             }
 
         }
-        return AsyncResult.forValue(aufträge);
+        return aufträge;
     }
 
     @Async

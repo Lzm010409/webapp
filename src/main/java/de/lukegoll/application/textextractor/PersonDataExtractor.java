@@ -68,6 +68,7 @@ public class PersonDataExtractor implements TextExtractor {
                 } else {
                     versicherung = new Kontakt();
                     versicherung.setvName(pdfFormFieldMap.get("Versicherung").getValueAsString());
+                    versicherung.setPersonType(PersonType.VERSICHERUNG);
                     kontakts.add(versicherung);
                 }
 
@@ -81,6 +82,7 @@ public class PersonDataExtractor implements TextExtractor {
                 } else {
                     rechtsanwalt = new Kontakt();
                     rechtsanwalt.setvName(pdfFormFieldMap.get("Rechtsanwalt").getValueAsString());
+                    rechtsanwalt.setPersonType(PersonType.RECHTSANWALT);
                     kontakts.add(rechtsanwalt);
                 }
 

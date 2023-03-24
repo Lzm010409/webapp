@@ -76,7 +76,7 @@ public class AuftragsanlageView extends VerticalLayout {
     }
 
     private void startThread(UI ui, AuftragsanlageView auftragsanlageView) {
-        this.thread = new AuftragsVerarbeitungBean(ui, auftragsanlageView, this.auftragService, this.fahrzeugService, this.kontaktService);
+       // this.thread = new AuftragsVerarbeitungBean(ui, auftragsanlageView, this.auftragService, this.fahrzeugService, this.kontaktService);
         this.thread.start();
         stopButton.addClickListener(buttonClickEvent -> {
             this.thread.interrupt();
@@ -100,6 +100,8 @@ public class AuftragsanlageView extends VerticalLayout {
         }
 
     }
+
+
 
 
     private void configureStopButton() {
