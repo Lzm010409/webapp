@@ -40,15 +40,18 @@ public class Auftrag extends AbstractEntity {
     @JoinColumn(name = "fahrzeug", nullable = true)
     private Fahrzeug fahrzeug;
 
+    @Lob
+    private byte[] data;
+
     public Auftrag() {
         auftragStatus = AuftragStatus.OFFEN;
     }
 
-    public  String getAuftragsDatum() {
+    public String getAuftragsDatum() {
         return auftragsDatum;
     }
 
-    public  void setAuftragsDatum(String auftragsDatum) {
+    public void setAuftragsDatum(String auftragsDatum) {
         this.auftragsDatum = auftragsDatum;
     }
 
@@ -165,6 +168,14 @@ public class Auftrag extends AbstractEntity {
 
     public void setAuftragStatus(AuftragStatus auftragStatus) {
         this.auftragStatus = auftragStatus;
+    }
+
+    public byte[] getData() {
+        return data;
+    }
+
+    public void setData(byte[] data) {
+        this.data = data;
     }
 
     private List<Kontakt> generateKontaktList(Set<Kontakt> kontaktSet) {

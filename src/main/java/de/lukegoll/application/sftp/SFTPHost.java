@@ -8,34 +8,55 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.Properties;
+
 @Component
 public class SFTPHost {
 
     @Value("${sftp.host}")
-    private String sftpHost ="";
+    private String sftpHost = "";
 
     @Value("${sftp.user}")
-    private String sftpUser ="SFTP-User";
+    private String sftpUser = "SFTP-User";
     @Value("${sftp.password}")
-    private String sftpPassword="";
+    private String sftpPassword = "";
 
-    public ChannelSftp setupSFTP() throws JSchException {
-        JSch jsch = new JSch();
-        jsch.setKnownHosts(getSftpHost());
-        Session jschSession = jsch.getSession(getSftpUser(), getSftpHost());
-        jschSession.setPassword(getSftpPassword());
-        jschSession.connect();
-        System.out.println(jschSession.getHost());
-        return (ChannelSftp) jschSession.openChannel("sftp");
+
+    private JSch jsch;
+    private ChannelSftp channel;
+    private Session session;
+
+
+    public SFTPHost() {
+        jsch = new JSch();
     }
 
-    public static void main(String[] args) {
-        SFTPHost sftpHost1 = new SFTPHost();
-        try {
-            sftpHost1.setupSFTP();
-        } catch (Exception e) {
 
-        }
+    /**
+     * Authenticate with remote using password
+     *
+     * @param password password of remote
+     * @throws JSchException If there is problem with credentials or connection
+     */
+    public void authPassword(String password) throws JSchException {
+        session = jsch.getSession(sftpUser, sftpHost, 22);
+        //disable known hosts checking
+        //if you want to set knows hosts file You can set with jsch.setKnownHosts("path to known hosts file");
+        var config = new Properties();
+        config.put("StrictHostKeyChecking", "no");
+        session.setConfig(config);
+        session.setPassword(password);
+        session.connect();
+        channel = (ChannelSftp) session.openChannel("sftp");
+        channel.connect();
+    }
+
+
+    public static void main(String[] args) throws JSchException {
+        SFTPHost sftpHost1 = new SFTPHost();
+
+            sftpHost1.authPassword(sftpHost1.getSftpPassword());
+
     }
 
     @Autowired

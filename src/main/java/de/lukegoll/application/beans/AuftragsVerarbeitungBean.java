@@ -21,6 +21,7 @@ import de.lukegoll.application.data.service.KontaktService;
 import de.lukegoll.application.logWriter.LogWriter;
 import de.lukegoll.application.mailService.Mail;
 import de.lukegoll.application.mailService.empfänger.ReceiveMailService;
+import de.lukegoll.application.pdf.PdfEditor;
 import de.lukegoll.application.restfulapi.requests.Request;
 import de.lukegoll.application.textextractor.AuftragDataExtractor;
 import de.lukegoll.application.xml.xmlTranslator.XMLTranslator;
@@ -39,6 +40,7 @@ import org.springframework.web.context.annotation.ApplicationScope;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.LinkedList;
 import java.util.List;
@@ -56,7 +58,7 @@ public class AuftragsVerarbeitungBean extends Thread {
     ReceiveMailService receiveMailService;
     AtomicBoolean run = new AtomicBoolean(false);
     AtomicReference<List<String>> progressList = new AtomicReference<>();
-    List<Message> messageFuture = new LinkedList<>();
+    List<Message> messageFuture = new LinkedList<Message>();
     @Value("${spring.mail.username}")
     private String userName;
 
@@ -87,6 +89,8 @@ public class AuftragsVerarbeitungBean extends Thread {
 
     @Scheduled(fixedDelay = 10000)
     public void run() {
+        String aufnahmebogenPath = "";
+        String abtretungsPath = "";
         try {
             receiveMailService.login(userName, userPassword);
             messageFuture = receiveMailService.downloadNewMails();
@@ -94,7 +98,16 @@ public class AuftragsVerarbeitungBean extends Thread {
                 List<Mail> mailFuture = receiveMailService.extractAttachments(messageFuture);
                 receiveMailService.moveMails(messageFuture);
                 for (int i = 0; i < messageFuture.size(); i++) {
+                    for (int j = 0; j < mailFuture.get(i).getFiles().size(); j++) {
+                        if (mailFuture.get(i).getFiles().get(j).getFile().getName().contains("Abtretung")) {
+                            abtretungsPath = mailFuture.get(i).getFiles().get(j).getFile().getAbsolutePath();
+                        }
+                        if (mailFuture.get(i).getFiles().get(j).getFile().getName().contains("Aufnahmebogen")) {
+                            aufnahmebogenPath = mailFuture.get(i).getFiles().get(j).getFile().getAbsolutePath();
+                        }
+                    }
                     Auftrag auftragFuture = startAuftragsService(mailFuture.get(i));
+                    auftragFuture.setData(new PdfEditor().generateAbtretungAsByteArray(auftragFuture, abtretungsPath));
                     ListenableFuture<Auftrag> restFuture = new Request().httpPostAuftrag(auftragFuture,
                             dynServerData, dynToken);
                     Auftrag auftrag = restFuture.get();
@@ -109,6 +122,7 @@ public class AuftragsVerarbeitungBean extends Thread {
                     auftragService.saveAuftrag(auftrag);
                     auftrag.setAuftragStatus(AuftragStatus.VERARBEITET);
                     auftragService.update(auftrag);
+                    cleanFileDirectory(mailFuture.get(i));
                 }
             }
         } catch (MessagingException ex) {
@@ -119,6 +133,14 @@ public class AuftragsVerarbeitungBean extends Thread {
             throw new RuntimeException(ex);
         }
 
+    }
+
+
+    public void cleanFileDirectory(Mail mail) {
+        for (int i = 0; i < mail.getFiles().size(); i++) {
+            File file = mail.getFiles().get(i).getFile();
+            file.delete();
+        }
     }
 
 
@@ -152,7 +174,6 @@ public class AuftragsVerarbeitungBean extends Thread {
 
                     } else {
                         auftrag = ((Auftrag) auftragDataExtractor.extractText(file));
-
                     }
                 }
 
