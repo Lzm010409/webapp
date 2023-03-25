@@ -91,7 +91,7 @@ public class AuftragsVerarbeitungBean extends Thread {
 
     }
 
-    @Scheduled(fixedDelay = 10000)
+    @Scheduled(fixedDelay = 10000, initialDelay = 10000)
     public void run() {
         String aufnahmebogenPath = "";
         String abtretungsPath = "";
@@ -111,7 +111,7 @@ public class AuftragsVerarbeitungBean extends Thread {
                         }
                     }
                     Auftrag auftragFuture = startAuftragsService(mailFuture.get(i));
-                    auftragFuture.setData(new SerialBlob(new PdfEditor().generateAbtretungAsByteArray(auftragFuture, abtretungsPath)));
+                    auftragFuture.setData(new PdfEditor().generateAbtretungAsByteArray(auftragFuture, abtretungsPath));
                     ListenableFuture<Auftrag> restFuture = new Request().httpPostAuftrag(auftragFuture,
                             dynServerData, dynToken);
                     Auftrag auftrag = restFuture.get();
@@ -135,10 +135,6 @@ public class AuftragsVerarbeitungBean extends Thread {
             throw new RuntimeException(ex);
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
-        } catch (SerialException e) {
-            throw new RuntimeException(e);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
         }
 
     }

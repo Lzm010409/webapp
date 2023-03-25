@@ -3,6 +3,7 @@ package de.lukegoll.application.data.entity;
 
 import de.lukegoll.application.data.entity.persons.Kontakt;
 import de.lukegoll.application.data.enums.AuftragStatus;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.sql.Blob;
@@ -42,7 +43,8 @@ public class Auftrag extends AbstractEntity {
     private Fahrzeug fahrzeug;
 
     @Lob
-    private Blob data;
+    @Type(type = "org.hibernate.type.BinaryType")
+    private byte[] data;
 
     public Auftrag() {
         auftragStatus = AuftragStatus.OFFEN;
@@ -171,11 +173,11 @@ public class Auftrag extends AbstractEntity {
         this.auftragStatus = auftragStatus;
     }
 
-    public Blob getData() {
+    public byte[] getData() {
         return data;
     }
 
-    public void setData(Blob data) {
+    public void setData(byte[] data) {
         this.data = data;
     }
 

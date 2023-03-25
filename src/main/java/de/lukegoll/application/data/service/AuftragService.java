@@ -1,5 +1,6 @@
 package de.lukegoll.application.data.service;
 
+import java.sql.Blob;
 import java.util.List;
 import java.util.Optional;
 

@@ -50,13 +50,6 @@ public class PdfEditor {
     private String kennzeichenUG;
     private String versicherung;
 
-    public PdfEditor(
-
-    ) {
-
-
-    }
-
     private File editPdf(String file) {
         File outputFile = new File("/Users/lukegollenstede/Desktop/TEST/Files/abtretung " + Math.random() * 100 + ".pdf");
         try {
