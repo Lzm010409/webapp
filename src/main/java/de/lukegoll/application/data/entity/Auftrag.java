@@ -5,6 +5,7 @@ import de.lukegoll.application.data.entity.persons.Kontakt;
 import de.lukegoll.application.data.enums.AuftragStatus;
 
 import javax.persistence.*;
+import java.sql.Blob;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,7 +42,7 @@ public class Auftrag extends AbstractEntity {
     private Fahrzeug fahrzeug;
 
     @Lob
-    private byte[] data;
+    private Blob data;
 
     public Auftrag() {
         auftragStatus = AuftragStatus.OFFEN;
@@ -170,11 +171,11 @@ public class Auftrag extends AbstractEntity {
         this.auftragStatus = auftragStatus;
     }
 
-    public byte[] getData() {
+    public Blob getData() {
         return data;
     }
 
-    public void setData(byte[] data) {
+    public void setData(Blob data) {
         this.data = data;
     }
 

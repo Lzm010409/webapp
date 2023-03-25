@@ -38,9 +38,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.context.annotation.ApplicationScope;
 
+import javax.sql.rowset.serial.SerialBlob;
+import javax.sql.rowset.serial.SerialException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.sql.Blob;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.LinkedList;
 import java.util.List;
@@ -107,7 +111,7 @@ public class AuftragsVerarbeitungBean extends Thread {
                         }
                     }
                     Auftrag auftragFuture = startAuftragsService(mailFuture.get(i));
-                    auftragFuture.setData(new PdfEditor().generateAbtretungAsByteArray(auftragFuture, abtretungsPath));
+                    auftragFuture.setData(new SerialBlob(new PdfEditor().generateAbtretungAsByteArray(auftragFuture, abtretungsPath)));
                     ListenableFuture<Auftrag> restFuture = new Request().httpPostAuftrag(auftragFuture,
                             dynServerData, dynToken);
                     Auftrag auftrag = restFuture.get();
@@ -131,6 +135,10 @@ public class AuftragsVerarbeitungBean extends Thread {
             throw new RuntimeException(ex);
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
+        } catch (SerialException e) {
+            throw new RuntimeException(e);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
 
     }

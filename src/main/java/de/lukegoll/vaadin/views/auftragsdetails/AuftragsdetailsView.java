@@ -1,5 +1,6 @@
 package de.lukegoll.vaadin.views.auftragsdetails;
 
+import com.vaadin.componentfactory.pdfviewer.PdfViewer;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEvent;
@@ -36,6 +37,7 @@ import de.lukegoll.vaadin.converter.IntegerConverter;
 import de.lukegoll.vaadin.converter.KundeConverter;
 import de.lukegoll.vaadin.converter.LocalDateConverter;
 import de.lukegoll.vaadin.converter.LocalTimeConverter;
+
 
 import java.util.HashSet;
 import java.util.Set;
@@ -111,6 +113,12 @@ public class AuftragsdetailsView extends FormLayout {
     TextField stadtVersicherung = new TextField("Stadt");
     TextField telVersicherung = new TextField("Tel");
     TextField mailVersicherung = new TextField("Mail");
+
+    /**
+     * Files für den Auftrag
+     */
+    PdfViewer pdfViewer = new PdfViewer();
+
     Button saveButton = new Button("Speichern");
     Button deleteButton = new Button("Löschen");
     Button cancelButton = new Button("Abbrechen");
@@ -129,9 +137,7 @@ public class AuftragsdetailsView extends FormLayout {
         configureKundenBinder();
         configureRechtsanwaltBinder();
         configureVersicherungBinder();
-        add(createTabSheet()
-
-        );
+        add(createTabSheet());
     }
 
     private Component createTabSheet() {
@@ -142,6 +148,7 @@ public class AuftragsdetailsView extends FormLayout {
         tabSheet.add("Auftragsdetails", createAuftragsTab());
         tabSheet.add("Fahrzeugdetails", createFahrzeugTab());
         tabSheet.add("Kontaktdetails", createKontaktTab());
+        tabSheet.add("Dateien", createDataTab());
 
         return tabSheet;
     }
@@ -229,6 +236,10 @@ public class AuftragsdetailsView extends FormLayout {
         return formLayout;
     }
 
+    private Component createDataTab() {
+        return pdfViewer;
+    }
+
     private void configureAuftragsDetailsBinder() {
         auftragsDetailsBinder.forField(auftragsDatum).withConverter(new LocalDateConverter()).bind(Auftrag::getAuftragsDatum, Auftrag::setAuftragsDatum);
         auftragsDetailsBinder.forField(schadenDatum).withConverter(new LocalDateConverter()).bind(Auftrag::getSchadenDatum, Auftrag::setSchadenDatum);
@@ -241,6 +252,7 @@ public class AuftragsdetailsView extends FormLayout {
         auftragsDetailsBinder.forField(besichtigungsUhrzeit).withConverter(new LocalTimeConverter()).bind(Auftrag::getBesichtigungsUhrzeit, Auftrag::setBesichtigungsUhrzeit);
         auftragsDetailsBinder.forField(schadenhergang).bind(Auftrag::getSchadenhergang, Auftrag::setSchadenhergang);
         auftragsDetailsBinder.forField(auftragsBesonderheiten).bind(Auftrag::getAuftragsBesonderheiten, Auftrag::setAuftragsBesonderheiten);
+
 
 
     }
@@ -636,5 +648,271 @@ public class AuftragsdetailsView extends FormLayout {
         return addListener(UpdateEvent.class, listener);
     }
 
+    public AuftragService getAuftragService() {
+        return auftragService;
+    }
 
+    public void setAuftragService(AuftragService auftragService) {
+        this.auftragService = auftragService;
+    }
+
+    public FahrzeugService getFahrzeugService() {
+        return fahrzeugService;
+    }
+
+    public void setFahrzeugService(FahrzeugService fahrzeugService) {
+        this.fahrzeugService = fahrzeugService;
+    }
+
+    public Binder<Kunde> getKundenBinder() {
+        return kundenBinder;
+    }
+
+    public void setKundenBinder(Binder<Kunde> kundenBinder) {
+        this.kundenBinder = kundenBinder;
+    }
+
+    public Binder<Rechtsanwalt> getRechtsanwaltBinder() {
+        return rechtsanwaltBinder;
+    }
+
+    public void setRechtsanwaltBinder(Binder<Rechtsanwalt> rechtsanwaltBinder) {
+        this.rechtsanwaltBinder = rechtsanwaltBinder;
+    }
+
+    public Binder<Versicherung> getVersicherungBinder() {
+        return versicherungBinder;
+    }
+
+    public void setVersicherungBinder(Binder<Versicherung> versicherungBinder) {
+        this.versicherungBinder = versicherungBinder;
+    }
+
+    public TextField getBesichtigunsOrt() {
+        return besichtigunsOrt;
+    }
+
+    public void setBesichtigunsOrt(TextField besichtigunsOrt) {
+        this.besichtigunsOrt = besichtigunsOrt;
+    }
+
+    public TextField getAnredeKunde() {
+        return anredeKunde;
+    }
+
+    public void setAnredeKunde(TextField anredeKunde) {
+        this.anredeKunde = anredeKunde;
+    }
+
+    public TextField getvNameKunde() {
+        return vNameKunde;
+    }
+
+    public void setvNameKunde(TextField vNameKunde) {
+        this.vNameKunde = vNameKunde;
+    }
+
+    public TextField getnNameKunde() {
+        return nNameKunde;
+    }
+
+    public void setnNameKunde(TextField nNameKunde) {
+        this.nNameKunde = nNameKunde;
+    }
+
+    public TextField getAdresseKunde() {
+        return adresseKunde;
+    }
+
+    public void setAdresseKunde(TextField adresseKunde) {
+        this.adresseKunde = adresseKunde;
+    }
+
+    public TextField getPlzKunde() {
+        return plzKunde;
+    }
+
+    public void setPlzKunde(TextField plzKunde) {
+        this.plzKunde = plzKunde;
+    }
+
+    public TextField getStadtKunde() {
+        return stadtKunde;
+    }
+
+    public void setStadtKunde(TextField stadtKunde) {
+        this.stadtKunde = stadtKunde;
+    }
+
+    public TextField getTelKunde() {
+        return telKunde;
+    }
+
+    public void setTelKunde(TextField telKunde) {
+        this.telKunde = telKunde;
+    }
+
+    public TextField getMailKunde() {
+        return mailKunde;
+    }
+
+    public void setMailKunde(TextField mailKunde) {
+        this.mailKunde = mailKunde;
+    }
+
+    public TextField getAnredeRechtsanwalt() {
+        return anredeRechtsanwalt;
+    }
+
+    public void setAnredeRechtsanwalt(TextField anredeRechtsanwalt) {
+        this.anredeRechtsanwalt = anredeRechtsanwalt;
+    }
+
+    public TextField getvNameRechtsanwalt() {
+        return vNameRechtsanwalt;
+    }
+
+    public void setvNameRechtsanwalt(TextField vNameRechtsanwalt) {
+        this.vNameRechtsanwalt = vNameRechtsanwalt;
+    }
+
+    public TextField getnNameRechtsanwalt() {
+        return nNameRechtsanwalt;
+    }
+
+    public void setnNameRechtsanwalt(TextField nNameRechtsanwalt) {
+        this.nNameRechtsanwalt = nNameRechtsanwalt;
+    }
+
+    public TextField getAdresseRechtsanwalt() {
+        return adresseRechtsanwalt;
+    }
+
+    public void setAdresseRechtsanwalt(TextField adresseRechtsanwalt) {
+        this.adresseRechtsanwalt = adresseRechtsanwalt;
+    }
+
+    public TextField getPlzRechtsanwalt() {
+        return plzRechtsanwalt;
+    }
+
+    public void setPlzRechtsanwalt(TextField plzRechtsanwalt) {
+        this.plzRechtsanwalt = plzRechtsanwalt;
+    }
+
+    public TextField getStadtRechtsanwalt() {
+        return stadtRechtsanwalt;
+    }
+
+    public void setStadtRechtsanwalt(TextField stadtRechtsanwalt) {
+        this.stadtRechtsanwalt = stadtRechtsanwalt;
+    }
+
+    public TextField getTelRechtsanwalt() {
+        return telRechtsanwalt;
+    }
+
+    public void setTelRechtsanwalt(TextField telRechtsanwalt) {
+        this.telRechtsanwalt = telRechtsanwalt;
+    }
+
+    public TextField getMailRechtsanwalt() {
+        return mailRechtsanwalt;
+    }
+
+    public void setMailRechtsanwalt(TextField mailRechtsanwalt) {
+        this.mailRechtsanwalt = mailRechtsanwalt;
+    }
+
+    public TextField getAnredeVersicherung() {
+        return anredeVersicherung;
+    }
+
+    public void setAnredeVersicherung(TextField anredeVersicherung) {
+        this.anredeVersicherung = anredeVersicherung;
+    }
+
+    public TextField getvNameVersicherung() {
+        return vNameVersicherung;
+    }
+
+    public void setvNameVersicherung(TextField vNameVersicherung) {
+        this.vNameVersicherung = vNameVersicherung;
+    }
+
+    public TextField getnNameVersicherung() {
+        return nNameVersicherung;
+    }
+
+    public void setnNameVersicherung(TextField nNameVersicherung) {
+        this.nNameVersicherung = nNameVersicherung;
+    }
+
+    public TextField getAdresseVersicherung() {
+        return adresseVersicherung;
+    }
+
+    public void setAdresseVersicherung(TextField adresseVersicherung) {
+        this.adresseVersicherung = adresseVersicherung;
+    }
+
+    public TextField getPlzVersicherung() {
+        return plzVersicherung;
+    }
+
+    public void setPlzVersicherung(TextField plzVersicherung) {
+        this.plzVersicherung = plzVersicherung;
+    }
+
+    public TextField getStadtVersicherung() {
+        return stadtVersicherung;
+    }
+
+    public void setStadtVersicherung(TextField stadtVersicherung) {
+        this.stadtVersicherung = stadtVersicherung;
+    }
+
+    public TextField getTelVersicherung() {
+        return telVersicherung;
+    }
+
+    public void setTelVersicherung(TextField telVersicherung) {
+        this.telVersicherung = telVersicherung;
+    }
+
+    public TextField getMailVersicherung() {
+        return mailVersicherung;
+    }
+
+    public void setMailVersicherung(TextField mailVersicherung) {
+        this.mailVersicherung = mailVersicherung;
+    }
+
+    public Auftrag getAuftrag() {
+        return auftrag;
+    }
+
+    public Fahrzeug getFahrzeug() {
+        return fahrzeug;
+    }
+
+    public Kontakt getKunde() {
+        return kunde;
+    }
+
+    public void setKunde(Kontakt kunde) {
+        this.kunde = kunde;
+    }
+
+    public Rechtsanwalt getRechtsanwalt() {
+        return rechtsanwalt;
+    }
+
+    public PdfViewer getPdfViewer() {
+        return pdfViewer;
+    }
+
+    public void setPdfViewer(PdfViewer pdfViewer) {
+        this.pdfViewer = pdfViewer;
+    }
 }
