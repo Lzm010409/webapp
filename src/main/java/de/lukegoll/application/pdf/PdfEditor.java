@@ -20,6 +20,7 @@ import de.lukegoll.application.data.entity.Auftrag;
 import de.lukegoll.application.data.entity.Fahrzeug;
 import de.lukegoll.application.data.entity.persons.Kontakt;
 import de.lukegoll.application.xml.xmlEntities.constants.PersonType;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

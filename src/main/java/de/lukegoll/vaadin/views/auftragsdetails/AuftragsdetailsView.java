@@ -24,6 +24,7 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.timepicker.TimePicker;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.shared.Registration;
 import de.lukegoll.application.data.entity.Auftrag;
 import de.lukegoll.application.data.entity.Fahrzeug;
@@ -237,6 +238,8 @@ public class AuftragsdetailsView extends FormLayout {
     }
 
     private Component createDataTab() {
+        pdfViewer.setSrc("/Users/lukegollenstede/Downloads/Rechnung_3692157276.pdf");
+        pdfViewer.setSizeFull();
         return pdfViewer;
     }
 

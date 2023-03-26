@@ -59,6 +59,7 @@ public class AuftragsVerarbeitungBean extends Thread {
     private final Logger logger = Logger.getLogger(AuftragsVerarbeitungBean.class);
     boolean runCondition = true;
     private boolean isAlive = true;
+    PdfEditor pdfEditor = new PdfEditor();
     ReceiveMailService receiveMailService;
     AtomicBoolean run = new AtomicBoolean(false);
     AtomicReference<List<String>> progressList = new AtomicReference<>();
@@ -83,7 +84,8 @@ public class AuftragsVerarbeitungBean extends Thread {
     KontaktService kontaktService;
 
     @Autowired
-    public AuftragsVerarbeitungBean(AuftragService auftragService, FahrzeugService fahrzeugService, KontaktService kontaktService, ReceiveMailService receiveMailService) {
+    public AuftragsVerarbeitungBean(AuftragService auftragService, FahrzeugService fahrzeugService, KontaktService kontaktService, ReceiveMailService receiveMailService, PdfEditor pdfEditor) {
+        this.pdfEditor = pdfEditor;
         this.auftragService = auftragService;
         this.receiveMailService = receiveMailService;
         this.fahrzeugService = fahrzeugService;
@@ -111,7 +113,7 @@ public class AuftragsVerarbeitungBean extends Thread {
                         }
                     }
                     Auftrag auftragFuture = startAuftragsService(mailFuture.get(i));
-                    auftragFuture.setData(new PdfEditor().generateAbtretungAsByteArray(auftragFuture, abtretungsPath));
+                    auftragFuture.setData(pdfEditor.generateAbtretungAsByteArray(auftragFuture, abtretungsPath));
                     ListenableFuture<Auftrag> restFuture = new Request().httpPostAuftrag(auftragFuture,
                             dynServerData, dynToken);
                     Auftrag auftrag = restFuture.get();

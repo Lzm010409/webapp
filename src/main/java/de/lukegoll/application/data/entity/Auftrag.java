@@ -43,7 +43,7 @@ public class Auftrag extends AbstractEntity {
     private Fahrzeug fahrzeug;
 
     @Lob
-    @Type(type = "org.hibernate.type.BinaryType")
+    // @Type(type = "org.hibernate.type.BinaryType")
     private byte[] data;
 
     public Auftrag() {
