@@ -9,7 +9,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class Vehicle {
 
-    private String manufaturer;
+    private String manufacturer;
 
     private String model;
 
@@ -17,7 +17,7 @@ public class Vehicle {
     private String plate_number_opponent;
     private String vin;
     private String kba_numbers;
-    private String first_registrations;
+    private String first_registration;
     private long mileage_read;
     private Unit mileage_read_unit_code;
     private long mileage_specified;
@@ -29,14 +29,14 @@ public class Vehicle {
 
     }
 
-    public Vehicle(String manufaturer, String model, String plate_number, String plate_number_opponent, String vin, String kba_numbers, String first_registrations, long mileage_read, Unit mileage_read_unit_code, long mileage_specified, Unit mileage_specified_unit_code, long mileage_estimated, Unit mileage_estimated_unit_code) {
-        this.manufaturer = manufaturer;
+    public Vehicle(String manufacturer, String model, String plate_number, String plate_number_opponent, String vin, String kba_numbers, String first_registration, long mileage_read, Unit mileage_read_unit_code, long mileage_specified, Unit mileage_specified_unit_code, long mileage_estimated, Unit mileage_estimated_unit_code) {
+        this.manufacturer = manufacturer;
         this.model = model;
         this.plate_number = plate_number;
         this.plate_number_opponent = plate_number_opponent;
         this.vin = vin;
         this.kba_numbers = kba_numbers;
-        this.first_registrations = first_registrations;
+        this.first_registration = first_registration;
         this.mileage_read = mileage_read;
         this.mileage_read_unit_code = mileage_read_unit_code;
         this.mileage_specified = mileage_specified;
@@ -46,12 +46,12 @@ public class Vehicle {
     }
 
     @XmlElement
-    public String getManufaturer() {
-        return manufaturer;
+    public String getManufacturer() {
+        return manufacturer;
     }
 
-    public void setManufaturer(String manufaturer) {
-        this.manufaturer = manufaturer;
+    public void setManufacturer(String manufacturer) {
+        this.manufacturer = manufacturer;
     }
     @XmlElement
     public String getModel() {
@@ -94,12 +94,12 @@ public class Vehicle {
         this.kba_numbers = kba_numbers;
     }
     @XmlElement
-    public String getFirst_registrations() {
-        return first_registrations;
+    public String getFirst_reistration() {
+        return first_registration;
     }
 
-    public void setFirst_registrations(String first_registrations) {
-        this.first_registrations = first_registrations;
+    public void setFirst_registration(String first_registration) {
+        this.first_registration = first_registration;
     }
     @XmlElement
     public long getMileage_read() {

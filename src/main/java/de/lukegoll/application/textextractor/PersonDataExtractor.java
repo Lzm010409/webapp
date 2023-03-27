@@ -198,8 +198,8 @@ public class PersonDataExtractor implements TextExtractor {
             }
         }
 
-        kunde.setvName(vnameBuilder.toString());
-        kunde.setnName(nnameBuilder.toString());
+        kunde.setvName(vnameBuilder.toString().trim());
+        kunde.setnName(nnameBuilder.toString().trim());
     }
 
     private boolean isAdress(String s) {

@@ -6,10 +6,14 @@ import java.time.format.DateTimeFormatter;
 
 public class LocalDateTimeAdapter extends XmlAdapter<String, LocalDateTime> {
     public LocalDateTime unmarshal(String v) throws Exception {
-        String time = v + " 00:00:00";
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        LocalDateTime date = LocalDateTime.parse(time, formatter);
-        return date;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        try{
+            LocalDateTime date = LocalDateTime.parse(v);
+            return date;
+        }catch (Exception e){
+            return null;
+        }
+
     }
 
     public String marshal(LocalDateTime v) {

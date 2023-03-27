@@ -113,7 +113,7 @@ public class ReceiveMailService {
                 for (int k = 0; k < multipart.getCount(); k++) {
                     BodyPart bodyPart = multipart.getBodyPart(k);
                     int number = (int) (Math.random() * 100);
-                    String filePath = String.format("/Users/lukegollenstede/Desktop/TEST/Files/%d-%s", number, bodyPart.getFileName());
+                    String filePath = String.format("src/main/resources/cache/%d-%s", number, bodyPart.getFileName());
                     if (bodyPart.getFileName() == null) {
                         continue;
                     }

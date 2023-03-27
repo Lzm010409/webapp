@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
@@ -176,18 +177,15 @@ public class AuftragDataExtractor implements TextExtractor {
     }
 
     private String formatDate(String time) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        String dateTime = time.replace("/", "-");
-        char[] chars = dateTime.toCharArray();
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < chars.length; i++) {
-            if (Character.isDigit(chars[i]) || chars[i] == '-') {
-                builder.append(chars[i]);
-            }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        time = time + " 00:00:00";
+        try{
+            LocalDateTime date = LocalDateTime.parse(time, formatter);
+            return date.toString();
+        }catch (Exception e){
+            return "";
         }
-        dateTime = builder.toString();
-        LocalDate date = LocalDate.parse(dateTime, formatter);
-        return date.toString();
+
     }
 
     public Auftrag toAuftrag(Object object) {

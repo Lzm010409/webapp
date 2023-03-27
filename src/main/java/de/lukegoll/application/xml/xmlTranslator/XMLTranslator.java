@@ -8,24 +8,17 @@ import de.lukegoll.application.xml.xmlEntities.Case;
 import de.lukegoll.application.xml.xmlEntities.ClaimnetDistribution;
 import de.lukegoll.application.xml.xmlEntities.Document;
 import de.lukegoll.application.xml.xmlEntities.adapter.LocalDateTimeAdapter;
-import de.lukegoll.application.xml.xmlEntities.caseData.Admin_Data;
-import de.lukegoll.application.xml.xmlEntities.caseData.ClaimnetInfo;
-import de.lukegoll.application.xml.xmlEntities.caseData.Vehicle;
+import de.lukegoll.application.xml.xmlEntities.caseData.*;
 import de.lukegoll.application.xml.xmlEntities.caseData.participantData.*;
 import de.lukegoll.application.xml.xmlEntities.caseData.participantData.Country;
 import de.lukegoll.application.xml.xmlEntities.constants.*;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.AsyncResult;
-import org.springframework.util.concurrent.ListenableFuture;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.io.*;
 import java.time.LocalDateTime;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class XMLTranslator {
 
@@ -36,13 +29,13 @@ public class XMLTranslator {
     public Vehicle auftragToVehicle(Auftrag auftrag) {
         Vehicle vehicle = new Vehicle();
         Fahrzeug fahrzeug = auftrag.getFahrzeug();
-        vehicle.setManufaturer(fahrzeug.getHersteller());
+        vehicle.setManufacturer(fahrzeug.getHersteller());
         vehicle.setModel(fahrzeug.getTyp());
         vehicle.setPlate_number(fahrzeug.getAmtlKennzeichen());
         vehicle.setPlate_number_opponent(auftrag.getKennzeichenUG());
         vehicle.setVin(fahrzeug.getFin());
         vehicle.setKba_numbers(fahrzeug.getHsntsn());
-        vehicle.setFirst_registrations(fahrzeug.getErstZulassung());
+        vehicle.setFirst_registration(fahrzeug.getErstZulassung());
         vehicle.setMileage_read(fahrzeug.getKmStand());
         vehicle.setMileage_read_unit_code(Unit.KM);
 
@@ -67,110 +60,65 @@ public class XMLTranslator {
         return admin_data;
     }
 
+    public Attachments auftragToAttachments(Auftrag auftrag) {
+        List<Attachment> attachments = new LinkedList<>();
+        String encodedString = Base64.getEncoder().encodeToString(auftrag.getData());
+        Attachment attachment = new Attachment();
+        attachment.setFilename("Abtretungserklärung");
+        attachment.setFile_extension("PDF");
+        attachment.setBase64(encodedString);
+        attachments.add(attachment);
+        return new Attachments(attachments);
+
+    }
+
     public Participants auftragToParticipants(Auftrag auftrag) {
         Participants participants = new Participants();
         List<Participant> participantsList = new LinkedList<>();
         try {
-            Object[] kontakts = auftrag.getKontakte().toArray();
-            for (int i = 0; i < kontakts.length; i++) {
-                if (kontakts[i] instanceof Kontakt) {
-                    if (((Kontakt) kontakts[i]).getPersonType() == PersonType.KUNDE) {
-                        Participant kunde = new Participant();
-                        Address kundenAddress = new Address();
-                        Contacts kundenContacts = new Contacts();
-                        List<Contact> contactList = new LinkedList<>();
-                        Contact tel = new Contact();
-                        Contact mail = new Contact();
-                        tel.setValue(((Kontakt) kontakts[i]).getTel());
-                        tel.setName(ContactType.MOBILE.toString());
-                        mail.setValue(((Kontakt) kontakts[i]).getMail());
-                        mail.setName(ContactType.MAIL.toString());
-                        contactList.add(tel);
-                        contactList.add(mail);
-                        kundenContacts.setContact(contactList);
-                        kundenAddress.setStreet(((Kontakt) kontakts[i]).getAdresse());
-                        kundenAddress.setNumber(parseNumber(((Kontakt) kontakts[i]).getAdresse()));
-                        kundenAddress.setPostalcode(((Kontakt) kontakts[i]).getPlz());
-                        kundenAddress.setCity(((Kontakt) kontakts[i]).getStadt());
-                        kundenAddress.setCountry(new Country(CountryCode.DE));
-                        kundenAddress.setContacts(kundenContacts);
-                        kunde.setAddress(kundenAddress);
-                        String type = ParticipantType.CU.toString() + "," + ParticipantType.CL.toString() + "," + ParticipantType.VO.toString();
-                        kunde.setType(type);
-                        kunde.setGender(((Kontakt) kontakts[i]).getAnrede());
-                        kunde.setName1(((Kontakt) kontakts[i]).getvName() + " " + ((Kontakt) kontakts[i]).getnName());
-                        if (((Kontakt) kontakts[i]).getAnrede().equalsIgnoreCase("firma")) {
-                            kunde.setTax_deduction(true
-                            );
-                        }
-                        participantsList.add(kunde);
-                    }
-                    if (((Kontakt) kontakts[i]).getPersonType() == PersonType.VERSICHERUNG) {
-                        Participant versicherung = new Participant();
-                        Address versicherungsAddress = new Address();
-                        Contacts versicherungContacts = new Contacts();
-                        List<Contact> contactList = new LinkedList<>();
-                        Contact tel = new Contact();
-                        Contact mail = new Contact();
-                        tel.setValue(((Kontakt) kontakts[i]).getTel());
-                        tel.setName(ContactType.MOBILE.toString());
-                        mail.setValue(((Kontakt) kontakts[i]).getMail());
-                        mail.setName(ContactType.MAIL.toString());
-                        contactList.add(tel);
-                        contactList.add(mail);
-                        versicherungContacts.setContact(contactList);
-                        versicherungsAddress.setStreet(((Kontakt) kontakts[i]).getAdresse());
-                        versicherungsAddress.setNumber(parseNumber(((Kontakt) kontakts[i]).getAdresse()));
-                        versicherungsAddress.setPostalcode(((Kontakt) kontakts[i]).getPlz());
-                        versicherungsAddress.setCity(((Kontakt) kontakts[i]).getStadt());
-                        versicherungsAddress.setCountry(new Country(CountryCode.DE));
-                        versicherungsAddress.setContacts(versicherungContacts);
-                        versicherung.setAddress(versicherungsAddress);
-                        String type = ParticipantType.IS.name();
-                        versicherung.setType(type);
-                        versicherung.setGender(((Kontakt) kontakts[i]).getAnrede());
-                        versicherung.setName1(((Kontakt) kontakts[i]).getvName() + " " + ((Kontakt) kontakts[i]).getnName());
-                        if (((Kontakt) kontakts[i]).getAnrede().equalsIgnoreCase("firma")) {
-                            versicherung.setTax_deduction(true
-                            );
-                        }
-                        participantsList.add(versicherung);
-                    }
-                    if (((Kontakt) kontakts[i]).getPersonType() == PersonType.RECHTSANWALT) {
-                        Participant rechtsanwalt = new Participant();
-                        Address rechtsanwaltAddress = new Address();
-                        Contacts rechtsanwaltContacts = new Contacts();
-                        List<Contact> contactList = new LinkedList<>();
-                        Contact tel = new Contact();
-                        Contact mail = new Contact();
-                        tel.setValue(((Kontakt) kontakts[i]).getTel());
-                        tel.setName(ContactType.MOBILE.toString());
-                        mail.setValue(((Kontakt) kontakts[i]).getMail());
-                        mail.setName(ContactType.MAIL.toString());
-                        contactList.add(tel);
-                        contactList.add(mail);
-                        rechtsanwaltContacts.setContact(contactList);
-                        rechtsanwaltAddress.setStreet(((Kontakt) kontakts[i]).getAdresse());
-                        rechtsanwaltAddress.setNumber(parseNumber(((Kontakt) kontakts[i]).getAdresse()));
-                        rechtsanwaltAddress.setPostalcode(((Kontakt) kontakts[i]).getPlz());
-                        rechtsanwaltAddress.setCity(((Kontakt) kontakts[i]).getStadt());
-                        rechtsanwaltAddress.setCountry(new Country(CountryCode.DE));
-                        rechtsanwaltAddress.setContacts(rechtsanwaltContacts);
-                        rechtsanwalt.setAddress(rechtsanwaltAddress);
-                        java.lang.String type = ParticipantType.LA.name();
-                        rechtsanwalt.setType(type);
-                        rechtsanwalt.setGender(((Kontakt) kontakts[i]).getAnrede());
-                        rechtsanwalt.setName1(((Kontakt) kontakts[i]).getvName() + " " + ((Kontakt) kontakts[i]).getnName());
-                        if (((Kontakt) kontakts[i]).getAnrede().equalsIgnoreCase("firma")) {
-                            rechtsanwalt.setTax_deduction(true
-                            );
-                        }
-                        participantsList.add(rechtsanwalt);
-                    }
+            Iterator<Kontakt> kontaktIterator = auftrag.getKontakte().iterator();
+            while (kontaktIterator.hasNext()) {
+                Kontakt kontakt = kontaktIterator.next();
+                Participant participant = new Participant();
+                Address address = new Address();
+                Contacts contacts = new Contacts();
+                List<Contact> contactList = new LinkedList<>();
+                participant.setGender(kontakt.getAnrede());
+                participant.setName1(kontakt.getvName() + " " + kontakt.getnName());
+                Contact tel = new Contact();
+                Contact mail = new Contact();
+                tel.setValue(kontakt.getTel());
+                tel.setName(ContactType.MOBILE.toString());
+                mail.setValue(kontakt.getMail());
+                mail.setName(ContactType.MAIL.toString());
+                contactList.add(tel);
+                contactList.add(mail);
+                contacts.setContact(contactList);
+                address.setStreet(kontakt.getAdresse());
+                if (parseNumber(kontakt.getAdresse()) != null) {
+                    address.setNumber(parseNumber(kontakt.getAdresse()));
                 }
+                address.setPostalcode(kontakt.getPlz());
+                address.setCity(kontakt.getStadt());
+                address.setCountry(new Country(CountryCode.DE));
+                address.setContacts(contacts);
+                participant.setAddress(address);
+                if (kontakt.getPersonType() == PersonType.KUNDE) {
+                    String type = ParticipantType.CU.toString() + "," + ParticipantType.CL.toString() + "," + ParticipantType.VO.toString();
+                    participant.setType(type);
+                }
+                if (kontakt.getPersonType() == PersonType.RECHTSANWALT) {
+                    String type = ParticipantType.LA.name();
+                    participant.setType(type);
+                }
+                if (kontakt.getPersonType() == PersonType.VERSICHERUNG) {
+                    String type = ParticipantType.IS.name();
+                    participant.setType(type);
+                }
+                participantsList.add(participant);
             }
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
         participants.setParticipant(participantsList);
 
@@ -221,23 +169,28 @@ public class XMLTranslator {
         }
     }
 
-    public java.lang.String parseNumber(java.lang.String kunde) {
-        char[] chars = kunde.toCharArray();
-        StringBuilder builder = new StringBuilder();
-        boolean number = false;
-        for (int i = 0; i < chars.length; i++) {
-            if (Character.isDigit(chars[i])) {
-                number = true;
-                builder.append(chars[i]);
+    public String parseNumber(String kunde) {
+        try {
+            char[] chars = kunde.toCharArray();
+            StringBuilder builder = new StringBuilder();
+            boolean number = false;
+            for (int i = 0; i < chars.length; i++) {
+                if (Character.isDigit(chars[i])) {
+                    number = true;
+                    builder.append(chars[i]);
+                    continue;
+                }
+                if (number == true) {
+                    builder.append(chars[i]);
+                }
             }
-            if (number == true) {
-                builder.append(chars[i]);
-            }
+            return builder.toString();
+        } catch (Exception e) {
+            return null;
         }
-        return builder.toString();
     }
 
-    @Async
+
     public String writeXmlRequest(Auftrag auftrag) {
         try {
             String xmlString;
@@ -248,6 +201,7 @@ public class XMLTranslator {
             fall.setVehicle(auftragToVehicle(auftrag));
             fall.setParticipants(auftragToParticipants(auftrag));
             fall.setClaimnetInfo(auftragToClaimnetInfo(auftrag));
+            fall.setAttachments(auftragToAttachments(auftrag));
             document.setClaimnetDistribution(buildClaimentDistribution("TEERETS"));
             document.setFall(fall);
             LocalDateTime localDateTime = LocalDateTime.now();

@@ -13,7 +13,8 @@ public class LocalDateConverter implements Converter<LocalDate, String> {
     @Override
     public Result<String> convertToModel(LocalDate localDate, ValueContext valueContext) {
         try {
-            return Result.ok(localDate.toString());
+            String date = localDate.toString() + "T00:00";
+            return Result.ok(date);
         } catch (Exception e) {
             return Result.error("Datum nicht konvertierbar!");
         }
@@ -22,7 +23,18 @@ public class LocalDateConverter implements Converter<LocalDate, String> {
     @Override
     public LocalDate convertToPresentation(String s, ValueContext valueContext) {
         try {
-            LocalDate date = LocalDate.parse(s);
+            char[] chars = s.toCharArray();
+            boolean foundT = false;
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < chars.length; i++) {
+                if (chars[i] != 'T' && foundT == false) {
+                    builder.append(chars[i]);
+                }
+                if (chars[i] == 'T') {
+                    foundT = true;
+                }
+            }
+            LocalDate date = LocalDate.parse(builder.toString());
             return date;
         } catch (Exception e) {
             return null;

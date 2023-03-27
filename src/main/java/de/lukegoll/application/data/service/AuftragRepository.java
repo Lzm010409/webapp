@@ -15,4 +15,5 @@ public interface AuftragRepository extends JpaRepository<Auftrag, Long>, JpaSpec
             "where lower(c.gutachtenNummer) like lower(concat('%', :searchTerm, '%')) ")
     List<Auftrag> search(@Param("searchTerm") String searchTerm);
 
+
 }

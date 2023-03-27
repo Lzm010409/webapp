@@ -1,51 +1,34 @@
 package de.lukegoll.application.beans;
 
+import com.hierynomus.smbj.session.Session;
 import com.itextpdf.forms.PdfAcroForm;
 import com.itextpdf.forms.fields.PdfFormField;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
-import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.ComponentEvent;
-import com.vaadin.flow.component.Tag;
-import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.spring.annotation.VaadinSessionScope;
 import de.lukegoll.application.data.entity.Auftrag;
 import de.lukegoll.application.data.entity.persons.Kontakt;
 import de.lukegoll.application.data.enums.AuftragStatus;
 import de.lukegoll.application.data.service.AuftragService;
 import de.lukegoll.application.data.service.FahrzeugService;
 import de.lukegoll.application.data.service.KontaktService;
-import de.lukegoll.application.logWriter.LogWriter;
 import de.lukegoll.application.mailService.Mail;
 import de.lukegoll.application.mailService.empfänger.ReceiveMailService;
 import de.lukegoll.application.pdf.PdfEditor;
 import de.lukegoll.application.restfulapi.requests.Request;
+import de.lukegoll.application.smb.SMBService;
 import de.lukegoll.application.textextractor.AuftragDataExtractor;
-import de.lukegoll.application.xml.xmlTranslator.XMLTranslator;
-import de.lukegoll.vaadin.views.auftragsanlage.AuftragsanlageView;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import org.jboss.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.*;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import org.springframework.util.concurrent.ListenableFuture;
-import org.springframework.web.context.annotation.ApplicationScope;
 
-import javax.sql.rowset.serial.SerialBlob;
-import javax.sql.rowset.serial.SerialException;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.sql.Blob;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
+import java.net.MalformedURLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +42,9 @@ public class AuftragsVerarbeitungBean extends Thread {
     private final Logger logger = Logger.getLogger(AuftragsVerarbeitungBean.class);
     boolean runCondition = true;
     private boolean isAlive = true;
-    PdfEditor pdfEditor = new PdfEditor();
+    PdfEditor pdfEditor;
+
+    SMBService smbService;
     ReceiveMailService receiveMailService;
     AtomicBoolean run = new AtomicBoolean(false);
     AtomicReference<List<String>> progressList = new AtomicReference<>();
@@ -84,7 +69,8 @@ public class AuftragsVerarbeitungBean extends Thread {
     KontaktService kontaktService;
 
     @Autowired
-    public AuftragsVerarbeitungBean(AuftragService auftragService, FahrzeugService fahrzeugService, KontaktService kontaktService, ReceiveMailService receiveMailService, PdfEditor pdfEditor) {
+    public AuftragsVerarbeitungBean(AuftragService auftragService, FahrzeugService fahrzeugService, KontaktService kontaktService, ReceiveMailService receiveMailService, PdfEditor pdfEditor, SMBService smbClient) {
+        this.smbService = smbClient;
         this.pdfEditor = pdfEditor;
         this.auftragService = auftragService;
         this.receiveMailService = receiveMailService;
@@ -95,6 +81,9 @@ public class AuftragsVerarbeitungBean extends Thread {
 
     @Scheduled(fixedDelay = 10000, initialDelay = 10000)
     public void run() {
+
+        Session session = smbService.connect(smbService.getUserName(), smbService.getPassword());
+        //smbService.test(session);
         String aufnahmebogenPath = "";
         String abtretungsPath = "";
         try {

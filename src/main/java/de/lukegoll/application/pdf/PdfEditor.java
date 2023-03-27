@@ -19,6 +19,7 @@ import com.itextpdf.layout.renderer.ParagraphRenderer;
 import de.lukegoll.application.data.entity.Auftrag;
 import de.lukegoll.application.data.entity.Fahrzeug;
 import de.lukegoll.application.data.entity.persons.Kontakt;
+import de.lukegoll.application.otheradapters.SpecializedLocalDateTimeAdapter;
 import de.lukegoll.application.xml.xmlEntities.constants.PersonType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -52,11 +54,11 @@ public class PdfEditor {
     private String versicherung;
 
     private File editPdf(String file) {
-        File outputFile = new File("/Users/lukegollenstede/Desktop/TEST/Files/abtretung " + Math.random() * 100 + ".pdf");
+        File outputFile = new File("src/main/resources/cache/abtretungen.pdf");
         try {
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(file), new PdfWriter(outputFile));
             PdfCanvas canvas = new PdfCanvas(pdfDocument.getFirstPage());
-            PdfFont font = PdfFontFactory.createFont("/Users/lukegollenstede/Downloads/arial/arial.ttf");
+            PdfFont font = PdfFontFactory.createFont("src/main/resources/arial.ttf");
             Rectangle rectangle;
             Text text;
             Paragraph paragraph;
@@ -123,7 +125,7 @@ public class PdfEditor {
                     case ("schadendatum"):
                         list = coordinateMap.get(keys);
                         rectangle = new Rectangle(Integer.parseInt(list.get(0)), Integer.parseInt(list.get(1)), Integer.parseInt(list.get(2)), Integer.parseInt(list.get(3)));
-                        text = new Text(getSchadendatum()).setFont(font).setFontSize(8);
+                        text = new Text(new SpecializedLocalDateTimeAdapter().unmarshal(LocalDateTime.parse(getSchadendatum()))).setFont(font).setFontSize(8);
                         paragraph = new Paragraph().add(text);
                         new Canvas(canvas, rectangle).add(paragraph);
                         canvas.rectangle(rectangle);
